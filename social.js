@@ -18,7 +18,7 @@
     const {data:membership,error:memberError}=await client.from("ritmo_members").select("group_id,user_id").eq("user_id",user.id).maybeSingle();
     if(memberError)throw memberError;
     if(!membership){state.group=null;state.memberIds=[];state.profiles=[];announce();return state;}
-    const {data:group,error:groupError}=await client.from("ritmo_groups").select("id,name,invite_code").eq("id",membership.group_id).single();
+    const {data:group,error:groupError}=await client.from("ritmo_groups").select("id,name,invite_code,workout_titles").eq("id",membership.group_id).single();
     if(groupError)throw groupError;
     const {data:members,error:profilesError}=await client.from("ritmo_members").select("user_id").eq("group_id",group.id);
     if(profilesError)throw profilesError;
@@ -33,6 +33,9 @@
       const {error}=await client.from("ritmo_profiles").upsert(row,{onConflict:"user_id"});if(error)throw error;await loadState();return true;
     }catch(error){console.warn("Perfil não sincronizado:",error.message);return false;}
   }
+  async function saveWorkoutTitles(titles){
+    try{if(!ready()||!state.user||!state.group)return false;const {error}=await state.client.from("ritmo_groups").update({workout_titles:titles||{}}).eq("id",state.group.id);if(error)throw error;state.group.workout_titles=titles||{};announce();return true;}catch(error){console.warn("Nomes dos treinos não sincronizados:",error.message);return false;}
+  }
   function groupSetup(){return `<div class="eyebrow">ESPAÇO PRIVADO A DOIS</div><h1 class="page-title">Conectem suas contas.</h1><p class="subhead">Cada um entra com seu próprio e-mail. Depois, uma pessoa cria o grupo e compartilha o convite com a outra.</p><div class="card form-card"><form id="social-auth"><div class="field"><label for="social-email">E-mail</label><input type="email" id="social-email" name="email" autocomplete="email" required></div><div class="field"><label for="social-password">Senha</label><input type="password" id="social-password" name="password" autocomplete="current-password" minlength="8" required></div><button class="button button-dark button-block" name="authAction" value="login">Entrar</button><button class="button button-light button-block" name="authAction" value="signup" style="margin-top:9px">Criar minha conta</button></form><p id="social-note" class="form-note">Usaremos Supabase com políticas privadas: só integrantes do grupo poderão ler as mensagens, perfis e fotos.</p></div>`;}
   function groupActions(){return `<div class="eyebrow">GRUPO DE DUAS PESSOAS</div><h1 class="page-title">Criem seu espaço.</h1><p class="subhead">Uma pessoa cria o grupo e envia o código à outra.</p><div class="card form-card"><form id="create-group"><div class="field"><label for="group-name">Nome do grupo</label><input id="group-name" value="Nosso treino" maxlength="50"></div><button class="button button-dark button-block">Criar grupo e gerar convite</button></form><div class="divider"></div><form id="join-group"><div class="field"><label for="invite-code">Código recebido</label><input id="invite-code" autocomplete="off" minlength="32" maxlength="32" placeholder="Cole o código de convite"></div><button class="button button-light button-block">Entrar no grupo</button></form><p class="form-note">O código é privado. Envie apenas para sua esposa.</p></div>`;}
   function chatView(){
@@ -45,19 +48,19 @@
   }
   function appProfile(row){return row?{name:row.display_name,age:row.age,weight:row.weight_kg,height:row.height_cm,goal:row.goal,days:row.days_per_week,daysOfWeek:row.training_weekdays||[],minutes:row.session_minutes,experience:row.experience,equipment:row.equipment,likes:row.likes,injuryArea:row.injury_area||"Nenhuma",limitations:row.limitations||"",cardioMinutes:row.cardio_minutes??15,targetDate:row.target_date||"",nutritionGoal:row.nutrition_goal||"Quero hábitos gerais",foodNotes:row.food_notes||""}:null;}
   async function hasCheckinToday(){if(!ready())return false;const client=await getClient();await loadState();if(!state.user||!state.group)return false;const now=new Date();const localDate=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;const {data,error}=await client.from("ritmo_checkins").select("id").eq("group_id",state.group.id).eq("local_date",localDate).contains("participant_ids",[state.user.id]).limit(1);if(error)throw error;return !!data?.length;}
-  async function publishCheckin({activity,caption,photo,participants,date}){
+  async function publishCheckin({activity,caption,photo,participants,date,durationMinutes}){
     if(!ready())return false;const client=await getClient();if(!state.user||!state.group)await loadState();if(!state.user||!state.group)return false;
     const id=crypto.randomUUID();const path=`${state.group.id}/${state.user.id}/${id}.jpg`;
     const {error:uploadError}=await client.storage.from("ritmo-private").upload(path,photo,{contentType:photo.type||"image/jpeg",upsert:false});if(uploadError)throw uploadError;
     const participantIds=[...new Set([state.user.id,...(participants||[])])];
-    const {error}=await client.from("ritmo_checkins").insert({group_id:state.group.id,user_id:state.user.id,activity,caption,photo_path:path,local_date:date,participant_ids:participantIds});
+    const {error}=await client.from("ritmo_checkins").insert({group_id:state.group.id,user_id:state.user.id,activity,caption,duration_minutes:durationMinutes||null,photo_path:path,local_date:date,participant_ids:participantIds});
     if(error){await client.storage.from("ritmo-private").remove([path]);throw error;}return true;
   }
   async function listCheckins(limit=20){
     if(!ready())return [];const client=await getClient();if(!state.group)await loadState();if(!state.group)return [];
-    const {data,error}=await client.from("ritmo_checkins").select("id,group_id,user_id,activity,caption,photo_path,local_date,participant_ids,occurred_at").eq("group_id",state.group.id).order("occurred_at",{ascending:false}).limit(limit);if(error)throw error;
+    const {data,error}=await client.from("ritmo_checkins").select("id,group_id,user_id,activity,caption,duration_minutes,photo_path,local_date,participant_ids,occurred_at").eq("group_id",state.group.id).order("occurred_at",{ascending:false}).limit(limit);if(error)throw error;
     const names=new Map(state.profiles.map(profile=>[profile.user_id,profile.display_name]));
-    return Promise.all((data||[]).map(async(item)=>{let photoUrl="";if(item.photo_path){const result=await client.storage.from("ritmo-private").createSignedUrl(item.photo_path,3600);photoUrl=result.data?.signedUrl||"";}return {...item,photoUrl,displayName:names.get(item.user_id)||"Atleta",participantNames:(item.participant_ids||[]).map(id=>names.get(id)||"Atleta")};}));
+    return Promise.all((data||[]).map(async(item)=>{let photoUrl="";if(item.photo_path){const result=await client.storage.from("ritmo-private").createSignedUrl(item.photo_path,3600);photoUrl=result.data?.signedUrl||"";}return {...item,durationMinutes:item.duration_minutes||0,photoUrl,displayName:names.get(item.user_id)||"Atleta",participantNames:(item.participant_ids||[]).map(id=>names.get(id)||"Atleta")};}));
   }
   function subscribe(root){
     if(realtimeChannel)state.client.removeChannel(realtimeChannel);
@@ -71,6 +74,23 @@
     scrollChat();
   }
   function showError(root,message,positive=false){let note=root.querySelector("#social-note");if(!note){note=document.createElement("p");note.id="social-note";note.className="form-note";root.prepend(note);}note.textContent=message;note.style.color=positive?"#42654d":"#9a3d32";}
+  document.addEventListener("click",(event)=>{const button=event.target.closest('#social-auth button[name="authAction"]');if(button)button.form.dataset.authAction=button.value;},true);
+  document.addEventListener("submit",async(event)=>{
+    if(event.target?.id!=="social-auth")return;
+    event.preventDefault();event.stopImmediatePropagation();
+    const form=event.target;const root=document.getElementById("app");const buttons=[...form.querySelectorAll('button[name="authAction"]')];
+    const action=event.submitter?.value||form.dataset.authAction||"login";const fields=new FormData(form);const email=String(fields.get("email")||"").trim();const password=String(fields.get("password")||"");
+    buttons.forEach(button=>button.disabled=true);showError(root,action==="signup"?"Criando sua conta…":"Entrando…",true);
+    try{
+      const result=action==="signup"?await state.client.auth.signUp({email,password}):await state.client.auth.signInWithPassword({email,password});
+      if(result.error){showError(root,result.error.message);return;}
+      if(action==="signup"&&!result.data.session){showError(root,"Conta criada. Abra o e-mail de confirmação e depois volte para entrar.",true);return;}
+      await renderChat(root);
+    }catch(error){
+      const message=error?.message||"Não foi possível concluir o acesso.";
+      showError(root,/fetch|network|failed/i.test(message)?"Não consegui alcançar o Supabase. Confira a URL do projeto (ela termina em .supabase.co) e tente novamente.":message);
+    }finally{buttons.forEach(button=>button.disabled=false);}
+  },true);
   async function renderChat(root){
     if(!ready()){root.innerHTML=`<div class="eyebrow">ESPAÇO PRIVADO A DOIS</div><h1 class="page-title">Chat e treinos juntos.</h1><p class="subhead">A conexão online ainda precisa ser configurada.</p><div class="card form-card"><strong>Para ativar sem pagar nesta fase</strong><p class="form-note">Crie um projeto Supabase gratuito, rode o arquivo <code>supabase/schema.sql</code> e coloque a URL e a chave publishable em <code>supabase-config.js</code>. O projeto fica no GitHub Pages; mensagens e fotos ficam em tabelas privadas protegidas por RLS.</p><p class="form-note">Não publique uma chave service_role. A chave publishable é pública por projeto; a proteção vem das políticas do banco.</p></div>`;return;}
     root.innerHTML=`<div class="empty-state"><div class="empty-icon">◌</div><strong>Conectando seu espaço privado…</strong></div>`;
@@ -79,5 +99,6 @@
       await loadMessages();root.innerHTML=chatView();bindChat(root);subscribe(root);
     }catch(error){root.innerHTML=`<div class="eyebrow">CONEXÃO</div><h1 class="page-title">Não conectou ainda.</h1><p class="subhead">${html(error.message||"Tente de novo em alguns instantes.")}</p><button id="social-retry" class="button button-dark">Tentar novamente</button>`;root.querySelector("#social-retry").onclick=()=>renderChat(root);}
   }
-  window.RitmoSocial={bootstrap,saveProfile,renderChat,hasCheckinToday,publishCheckin,listCheckins,appProfile,get state(){return state;}};
+  window.RitmoSocial={bootstrap,saveProfile,saveWorkoutTitles,renderChat,hasCheckinToday,publishCheckin,listCheckins,appProfile,get state(){return state;}};
 })();
+
