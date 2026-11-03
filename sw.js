@@ -1,4 +1,4 @@
-const CACHE = "ritmo-shell-v9";
+const CACHE = "ritmo-shell-v12";
 const FILES = ["./", "./index.html", "./styles.css", "./redesign.css", "./library.css", "./library.js", "./app.js", "./training.js", "./social.js", "./supabase-config.js", "./manifest.webmanifest", "./assets/icon.svg"];
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(FILES)));
@@ -15,4 +15,7 @@ self.addEventListener("fetch", (event) => {
     return response;
   }).catch(async()=> (await caches.match(event.request)) || caches.match("./index.html")));
 });
+
+
+
 
