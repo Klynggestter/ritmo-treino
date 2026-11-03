@@ -3,50 +3,50 @@
   const exercise = (name, detail, areas, demo, cue) => ({ name, detail, areas, demo, cue });
   const bank = {
     squat: [
-      exercise("Leg press", "Quadríceps e glúteos · 8–12 repetições", ["joelho", "quadril"], "squat", "Use uma amplitude confortável; mantenha os pés apoiados e não force uma amplitude dolorosa."),
-      exercise("Agachamento goblet", "Quadríceps e glúteos · 8–12 repetições", ["joelho", "quadril", "costas"], "squat", "Desça só até onde controla o tronco e mantenha o peso próximo ao corpo."),
-      exercise("Hack squat", "Quadríceps e glúteos · 8–12 repetições", ["joelho", "quadril"], "squat", "Ajuste a posição dos pés e use a amplitude sem dor."),
+      exercise("Leg press", "Empurre a plataforma com os pés · quadríceps e glúteos · 8–12 repetições", ["joelho", "quadril"], "squat", "Mantenha o quadril apoiado no encosto e não trave os joelhos no final."),
+      exercise("Agachamento segurando um halter à frente", "Segure um halter junto ao peito e agache · quadríceps e glúteos · 8–12 repetições", ["joelho", "quadril", "costas"], "squat", "Desça só até onde controla o tronco e mantenha o peso próximo ao corpo."),
+      exercise("Agachamento na máquina hack", "Quadríceps e glúteos · 8–12 repetições", ["joelho", "quadril"], "squat", "Ajuste os pés na plataforma, apoie as costas e use uma amplitude confortável."),
       exercise("Agachamento até o banco", "Quadríceps e glúteos · 8–12 repetições", ["joelho", "quadril"], "squat", "Toque o banco com controle e suba sem impulso."),
     ],
     hinge: [
-      exercise("Levantamento romeno com halteres", "Posterior de coxa e glúteos · 8–12 repetições", ["costas", "quadril", "joelho"], "hinge", "Leve o quadril para trás; mantenha a carga perto das pernas e pare antes de perder o controle."),
-      exercise("Extensão de quadril na máquina", "Glúteos · 10–15 repetições", ["quadril"], "hinge", "Movimente o quadril sem arquear a lombar."),
-      exercise("Pull-through no cabo", "Glúteos e posterior · 10–15 repetições", ["costas", "quadril"], "hinge", "Empurre o quadril para trás e termine em pé, sem inclinar a lombar."),
+      exercise("Terra romeno com halteres", "Leve o quadril para trás com os halteres nas pernas · posterior e glúteos · 8–12 repetições", ["costas", "quadril", "joelho"], "hinge", "Mantenha os halteres perto das pernas e pare antes de perder o controle."),
+      exercise("Coice de glúteo na máquina", "Glúteos · 10–15 repetições", ["quadril"], "hinge", "Empurre a plataforma para trás sem arquear a lombar."),
+      exercise("Coice de glúteo no cabo", "Glúteos e posterior · 10–15 repetições", ["costas", "quadril"], "hinge", "Empurre o quadril para trás e termine em pé, sem inclinar a lombar."),
     ],
     chest: [
-      exercise("Chest press na máquina", "Peitoral e tríceps · 8–12 repetições", ["ombro", "cotovelo"], "push", "Ajuste os pegadores à altura do peito; use amplitude confortável."),
+      exercise("Supino na máquina", "Empurre os pegadores para a frente · peito e tríceps · 8–12 repetições", ["ombro", "cotovelo"], "push", "Ajuste os pegadores à altura do peito; use amplitude confortável."),
       exercise("Supino com halteres", "Peitoral e tríceps · 8–12 repetições", ["ombro", "cotovelo"], "push", "Mantenha os punhos alinhados e desça apenas até onde não há dor."),
       exercise("Supino inclinado na máquina", "Peitoral · 8–12 repetições", ["ombro", "cotovelo"], "push", "Ajuste o banco antes de começar; não force o ombro no fundo."),
       exercise("Flexão inclinada", "Peitoral e tríceps · 8–12 repetições", ["ombro", "cotovelo"], "push", "Mantenha o corpo alinhado e escolha uma altura que permita controle."),
     ],
     row: [
-      exercise("Remada com apoio no peito", "Costas e bíceps · 8–12 repetições", ["ombro", "cotovelo", "costas"], "pull", "Puxe sem elevar os ombros; controle a volta."),
+      exercise("Remada com peito apoiado", "Puxe os pegadores em direção ao tronco · costas e bíceps · 8–12 repetições", ["ombro", "cotovelo", "costas"], "pull", "Mantenha o peito no apoio; puxe sem elevar os ombros e controle a volta."),
       exercise("Remada sentada no cabo", "Costas e bíceps · 8–12 repetições", ["ombro", "cotovelo", "costas"], "pull", "Mantenha o tronco estável e evite embalar o corpo."),
       exercise("Remada unilateral no cabo", "Costas · 8–12 por lado", ["ombro", "cotovelo", "costas"], "pull", "Mantenha o ombro confortável e o tronco voltado para frente."),
       exercise("Remada baixa na máquina", "Costas e bíceps · 8–12 repetições", ["ombro", "cotovelo", "costas"], "pull", "Faça o movimento sem impulso e sem encolher os ombros."),
     ],
     verticalPull: [
-      exercise("Puxada na frente, pegada neutra", "Costas e bíceps · 8–12 repetições", ["ombro", "cotovelo"], "pull", "Puxe à frente do corpo; evite levar a barra atrás da nuca."),
-      exercise("Puxada articulada na máquina", "Costas · 8–12 repetições", ["ombro", "cotovelo"], "pull", "Use a amplitude confortável e mantenha o pescoço relaxado."),
+      exercise("Puxada alta na frente", "Puxe a barra de cima até a parte alta do peito · costas e bíceps · 8–12 repetições", ["ombro", "cotovelo"], "pull", "Puxe à frente do corpo; evite levar a barra atrás da nuca."),
+      exercise("Puxada na máquina com pegada neutra", "Costas · 8–12 repetições", ["ombro", "cotovelo"], "pull", "Puxe os pegadores para baixo, na frente do corpo; mantenha o pescoço relaxado."),
       exercise("Barra assistida", "Costas e bíceps · 6–10 repetições", ["ombro", "cotovelo"], "pull", "Ajuste a assistência para manter cada repetição controlada."),
     ],
     hamstring: [
       exercise("Mesa flexora", "Posterior de coxa · 10–15 repetições", ["joelho"], "curl", "Ajuste o eixo da máquina ao joelho e controle a volta."),
       exercise("Cadeira flexora", "Posterior de coxa · 10–15 repetições", ["joelho"], "curl", "Use amplitude confortável e evite tirar o quadril do assento."),
-      exercise("Flexão de joelho com bola", "Posterior de coxa · 8–12 repetições", ["joelho", "quadril"], "curl", "Mantenha o quadril estável e faça poucas repetições bem controladas."),
+      exercise("Puxar a bola com os calcanhares", "Parte de trás das coxas · 8–12 repetições", ["joelho", "quadril"], "curl", "Deite de costas, apoie os calcanhares na bola e traga-a devagar em sua direção."),
     ],
     glute: [
-      exercise("Elevação pélvica na máquina", "Glúteos · 8–12 repetições", ["quadril", "costas"], "hinge", "Termine com o quadril estendido sem hiperestender a lombar."),
-      exercise("Abdução de quadril na máquina", "Glúteos · 12–15 repetições", ["quadril"], "open", "Abra as pernas com controle, sem balançar o tronco."),
-      exercise("Extensão de quadril no cabo", "Glúteos · 10–15 por lado", ["quadril", "costas"], "hinge", "Mantenha o tronco estável e use uma amplitude confortável."),
+      exercise("Elevação pélvica na máquina", "Apoie as costas e eleve o quadril · glúteos · 8–12 repetições", ["quadril", "costas"], "hinge", "Termine com o quadril estendido sem hiperestender a lombar."),
+      exercise("Máquina abdutora — abrir as pernas", "Glúteos · 12–15 repetições", ["quadril"], "open", "Abra as pernas com controle, sem balançar o tronco."),
+      exercise("Coice de glúteo no cabo", "Empurre a perna para trás · glúteos · 10–15 por lado", ["quadril", "costas"], "hinge", "Mantenha o tronco estável e use uma amplitude confortável."),
     ],
     shoulder: [
-      exercise("Elevação lateral na máquina", "Deltoide lateral · 10–15 repetições", ["ombro", "cotovelo"], "raise", "Suba só até uma altura confortável, sem impulso."),
-      exercise("Crucifixo inverso na máquina", "Deltoide posterior · 10–15 repetições", ["ombro", "cotovelo"], "open", "Mantenha o pescoço relaxado e controle a volta."),
-      exercise("Face pull leve no cabo", "Deltoide posterior e costas · 10–15 repetições", ["ombro", "cotovelo"], "pull", "Use carga leve e pare se houver desconforto no ombro."),
+      exercise("Elevação lateral na máquina", "Ombros · 10–15 repetições", ["ombro", "cotovelo"], "raise", "Suba só até uma altura confortável, sem impulso."),
+      exercise("Crucifixo inverso na máquina", "Parte de trás dos ombros · 10–15 repetições", ["ombro", "cotovelo"], "open", "Mantenha o pescoço relaxado e controle a volta."),
+      exercise("Puxada do cabo em direção ao rosto", "Ombros e costas · 10–15 repetições", ["ombro", "cotovelo"], "pull", "Use carga leve, puxe na altura do rosto e pare se houver desconforto no ombro."),
     ],
     biceps: [
-      exercise("Rosca bíceps na máquina", "Bíceps · 10–15 repetições", ["cotovelo"], "curl", "Mantenha os braços apoiados e evite balançar o tronco."),
+      exercise("Rosca bíceps sentada na máquina", "Parte da frente dos braços · 10–15 repetições", ["cotovelo"], "curl", "Mantenha os braços apoiados e evite balançar o tronco."),
       exercise("Rosca no cabo", "Bíceps · 10–15 repetições", ["cotovelo"], "curl", "Use uma carga que permita controlar a descida."),
       exercise("Rosca martelo com halteres", "Bíceps e antebraço · 8–12 repetições", ["cotovelo"], "curl", "Mantenha os punhos neutros e os cotovelos próximos ao corpo."),
     ],
@@ -60,9 +60,14 @@
       exercise("Panturrilha no leg press", "Panturrilhas · 10–15 repetições", ["tornozelo", "joelho"], "calf", "Use amplitude confortável e mantenha o joelho destravado."),
     ],
     core: [
-      exercise("Pallof press", "Core · 8–12 por lado", ["costas"], "core", "Mantenha o tronco estável; escolha uma resistência leve no início."),
-      exercise("Dead bug", "Core · 8–10 por lado", ["costas"], "core", "Mantenha a lombar confortável e mova devagar."),
-      exercise("Prancha inclinada", "Core · 20–40 segundos", ["ombro", "costas"], "core", "Apoie as mãos em uma superfície estável e pare se sentir dor."),
+      exercise("Segurar o cabo à frente sem girar o tronco", "Abdômen · 8–12 por lado", ["costas"], "core", "Mantenha o tronco estável; escolha uma resistência leve no início."),
+      exercise("Alternância de braço e perna deitada", "Abdômen · 8–10 por lado", ["costas"], "core", "Mantenha a lombar confortável; estenda devagar um braço e a perna oposta."),
+      exercise("Prancha com as mãos no banco", "Abdômen · 20–40 segundos", ["ombro", "costas"], "core", "Apoie as mãos em um banco firme, alinhe o corpo e pare se sentir dor."),
+    ],
+    mobility: [
+      exercise("Gato e camelo em quatro apoios", "Mobilidade da coluna · 8–10 repetições", [], "core", "Em quatro apoios, arredonde e depois alongue as costas devagar, sem forçar."),
+      exercise("Deslizar os braços na parede", "Mobilidade dos ombros · 8–10 repetições", [], "raise", "Encoste os braços na parede e suba apenas até onde for confortável."),
+      exercise("Mobilidade de quadril em pé", "Quadril · 8–10 movimentos por lado", [], "open", "Segure em um apoio firme e faça movimentos pequenos e controlados."),
     ],
     cardio: [
       exercise("Caminhada na esteira", "Cardio leve a moderado · 15 minutos", [], "walk", "Escolha um ritmo que permita conversar e ajuste a inclinação ao conforto."),
@@ -77,27 +82,27 @@
     row:[exercise("Remada isométrica com toalha", "Costas · 15–25 segundos", ["ombro","cotovelo"], "pull", "Puxe a toalha sem prender em objeto que possa soltar.")],
     verticalPull:[exercise("Anjo reverso deitado", "Costas e postura · 8–12 repetições", ["ombro"], "pull", "Faça sem carga e sem forçar a amplitude do ombro.")],
     hamstring:[exercise("Caminhada de calcanhares a partir da ponte", "Posterior de coxa · 6–10 repetições", ["joelho","quadril"], "curl", "Mantenha o quadril confortável e encurte a amplitude se necessário.")],
-    glute:[exercise("Abdução de quadril deitada", "Glúteos · 10–15 por lado", ["quadril"], "open", "Mantenha o quadril empilhado e mova sem impulso.")],
+    glute:[exercise("Abrir a perna deitada de lado", "Glúteos · 10–15 por lado", ["quadril"], "open", "Mantenha o quadril empilhado e mova sem impulso.")],
     shoulder:[exercise("Deslizamento de braços na parede", "Mobilidade leve · 8–10 repetições", ["ombro"], "raise", "Não force; interrompa se houver dor.")],
     biceps:[exercise("Rosca isométrica com toalha", "Bíceps · 15–25 segundos", ["cotovelo"], "curl", "Use esforço leve e pare se houver dor no braço.")],
     triceps:[exercise("Flexão inclinada com mãos próximas", "Tríceps · 6–10 repetições", ["ombro","cotovelo"], "push", "Use parede ou apoio firme e reduza a amplitude se necessário.")],
     calves:[exercise("Elevação de panturrilha em pé", "Panturrilhas · 10–15 repetições", ["tornozelo"], "calf", "Use apoio estável e evite quicar.")],
-    core:[exercise("Dead bug", "Core · 8–10 por lado", ["costas"], "core", "Mova devagar e mantenha a lombar confortável.")],
+    core:[exercise("Alternância de braço e perna deitada", "Abdômen · 8–10 por lado", ["costas"], "core", "Mova devagar e mantenha a lombar confortável.")],
     cardio:[exercise("Caminhada ao ar livre", "Cardio leve a moderado · 15 minutos", [], "walk", "Escolha um ritmo confortável e um trajeto seguro.")],
   };
   const homeGear={
     squat:[exercise("Agachamento com mochila", "Quadríceps e glúteos · 8–12 repetições", ["joelho","quadril","costas"], "squat", "Use mochila fechada e leve; controle a descida.")],
-    hinge:[exercise("Levantamento romeno com halteres", "Posterior e glúteos · 8–12 repetições", ["costas","quadril","joelho"], "hinge", "Leve o quadril para trás e mantenha a carga próxima das pernas.")],
+    hinge:[exercise("Terra romeno com halteres", "Leve o quadril para trás com halteres nas pernas · posterior e glúteos · 8–12 repetições", ["costas","quadril","joelho"], "hinge", "Mantenha os halteres próximos das pernas e pare antes de perder o controle.")],
     chest:[exercise("Supino no chão com halteres", "Peitoral e tríceps · 8–12 repetições", ["ombro","cotovelo"], "push", "Use amplitude confortável; o chão limita a descida.")],
-    row:[exercise("Remada unilateral com halter", "Costas · 8–12 por lado", ["ombro","cotovelo","costas"], "pull", "Apoie a mão numa superfície estável e não gire o tronco.")],
-    verticalPull:[exercise("Pullover com halter leve", "Costas e peitoral · 8–12 repetições", ["ombro","cotovelo"], "pull", "Só use se a mobilidade permitir sem desconforto no ombro.")],
+    row:[exercise("Remada com um halter", "Puxe o halter em direção ao quadril · costas · 8–12 por lado", ["ombro","cotovelo","costas"], "pull", "Apoie a mão numa superfície estável e não gire o tronco.")],
+    verticalPull:[exercise("Puxada de halter deitada", "Costas e peito · 8–12 repetições", ["ombro","cotovelo"], "pull", "Use carga leve e amplitude confortável; pare se houver desconforto no ombro.")],
     hamstring:[exercise("Flexão de joelho com toalha no chão", "Posterior de coxa · 6–10 repetições", ["joelho","quadril"], "curl", "Use piso que permita deslizar e faça uma amplitude controlada.")],
     glute:[exercise("Elevação pélvica com halter", "Glúteos · 8–12 repetições", ["quadril","costas"], "hinge", "Posicione a carga com proteção e evite arquear a lombar.")],
-    shoulder:[exercise("Elevação lateral com halteres leves", "Deltoide · 10–15 repetições", ["ombro","cotovelo"], "raise", "Suba apenas até uma amplitude sem dor.")],
+    shoulder:[exercise("Elevação lateral com halteres leves", "Ombros · 10–15 repetições", ["ombro","cotovelo"], "raise", "Suba apenas até uma amplitude sem dor.")],
     biceps:[exercise("Rosca com halteres", "Bíceps · 10–15 repetições", ["cotovelo"], "curl", "Mantenha os cotovelos estáveis e controle a descida.")],
     triceps:[exercise("Extensão de tríceps com elástico", "Tríceps · 10–15 repetições", ["cotovelo","ombro"], "push", "Prenda o elástico com segurança antes de começar.")],
     calves:[exercise("Elevação de panturrilha com halteres", "Panturrilhas · 10–15 repetições", ["tornozelo"], "calf", "Segure carga leve e use apoio firme.")],
-    core:[exercise("Dead bug", "Core · 8–10 por lado", ["costas"], "core", "Mova devagar e mantenha a lombar confortável.")],
+    core:[exercise("Alternância de braço e perna deitada", "Abdômen · 8–10 por lado", ["costas"], "core", "Mova devagar e mantenha a lombar confortável.")],
     cardio:[exercise("Caminhada ao ar livre", "Cardio leve a moderado · 15 minutos", [], "walk", "Escolha um ritmo confortável e um trajeto seguro.")],
   };
   const mixed = {
@@ -132,6 +137,7 @@
     const cardioMinutes=Math.min(...people.map(person=>Number(person.cardioMinutes??15)));
     const count=minutes<=30?4:minutes<=45?5:minutes<=60?6:minutes<=75?7:8;
     const keys=(mixed[kind]||mixed.fullA).filter(key=>key!=="cardio").slice(0,count);
+    if(profile.goal==="Mobilidade e postura"&&keys.length)keys[keys.length-1]="mobility";
     const members=people.map((person,index)=>({name:person.name||`Pessoa ${index+1}`,profile:person}));
     const exercises=keys.map((key,index)=>{
       const variations=members.map((member,personIndex)=>{
@@ -147,6 +153,7 @@
         const sets=member.profile.experience==="Iniciante"?2:3;
         let detail=item.detail.replace(/\d+ séries/,`${sets} séries`);
         if(member.profile.goal==="Hipertrofia e força") detail=detail.replace(/8–12|10–15|8–10|6–10/,"6–10");
+        if(member.profile.goal==="Resistência física") detail=detail.replace(/6–10|8–12|10–15|8–10/,"10–15");
         return {name:member.name,item:{...item,detail,kind:key},adapted,needsAttention,limitations:member.profile.limitations||""};
       });
       return {kind,key,members:variations};
