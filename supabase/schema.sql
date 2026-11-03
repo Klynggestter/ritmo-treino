@@ -32,8 +32,8 @@ create table if not exists public.ritmo_profiles (
   weight_kg numeric(5,1) check (weight_kg between 25 and 350),
   height_cm numeric(5,1) check (height_cm between 100 and 230),
   goal text,
-  days_per_week smallint check (days_per_week between 2 and 6),
-  training_weekdays smallint[] not null default array[0,2,4] check (cardinality(training_weekdays) between 2 and 6),
+  days_per_week smallint check (days_per_week between 1 and 7),
+  training_weekdays smallint[] not null default array[0,2,4] check (cardinality(training_weekdays) between 1 and 7),
   session_minutes smallint check (session_minutes between 30 and 120),
   experience text,
   equipment text,
@@ -44,10 +44,20 @@ create table if not exists public.ritmo_profiles (
   target_date date,
   nutrition_goal text,
   food_notes text,
+  show_presence boolean not null default true,
+  show_last_seen boolean not null default false,
+  last_active_at timestamptz,
   training_settings jsonb not null default '{}'::jsonb,
   updated_at timestamptz not null default now()
 );
 alter table public.ritmo_profiles add column if not exists training_settings jsonb not null default '{}'::jsonb;
+alter table public.ritmo_profiles add column if not exists show_presence boolean not null default true;
+alter table public.ritmo_profiles add column if not exists show_last_seen boolean not null default false;
+alter table public.ritmo_profiles add column if not exists last_active_at timestamptz;
+alter table public.ritmo_profiles drop constraint if exists ritmo_profiles_days_per_week_check;
+alter table public.ritmo_profiles add constraint ritmo_profiles_days_per_week_check check (days_per_week between 1 and 7);
+alter table public.ritmo_profiles drop constraint if exists ritmo_profiles_training_weekdays_check;
+alter table public.ritmo_profiles add constraint ritmo_profiles_training_weekdays_check check (cardinality(training_weekdays) between 1 and 7 and training_weekdays <@ array[0,1,2,3,4,5,6]::smallint[]);
 
 create table if not exists public.ritmo_checkins (
   id uuid primary key default gen_random_uuid(),
@@ -88,8 +98,10 @@ create table if not exists public.ritmo_messages (
   group_id uuid not null references public.ritmo_groups(id) on delete cascade,
   sender_id uuid not null references auth.users(id) on delete cascade,
   body text not null check (char_length(body) between 1 and 2000),
+  read_at timestamptz,
   created_at timestamptz not null default now()
 );
+alter table public.ritmo_messages add column if not exists read_at timestamptz;
 create index if not exists ritmo_messages_group_time on public.ritmo_messages(group_id, created_at desc);
 
 create or replace function public.ritmo_is_member(target_group uuid, target_user uuid default auth.uid())
@@ -203,6 +215,8 @@ drop policy if exists ritmo_messages_read on public.ritmo_messages;
 create policy ritmo_messages_read on public.ritmo_messages for select to authenticated using (public.ritmo_is_member(group_id));
 drop policy if exists ritmo_messages_insert on public.ritmo_messages;
 create policy ritmo_messages_insert on public.ritmo_messages for insert to authenticated with check (sender_id=auth.uid() and public.ritmo_is_member(group_id));
+drop policy if exists ritmo_messages_mark_read on public.ritmo_messages;
+create policy ritmo_messages_mark_read on public.ritmo_messages for update to authenticated using (sender_id<>auth.uid() and public.ritmo_is_member(group_id)) with check (sender_id<>auth.uid() and public.ritmo_is_member(group_id));
 drop policy if exists ritmo_training_logs_read on public.ritmo_training_logs;
 create policy ritmo_training_logs_read on public.ritmo_training_logs for select to authenticated using (public.ritmo_is_member(group_id));
 drop policy if exists ritmo_training_logs_insert on public.ritmo_training_logs;
@@ -248,6 +262,7 @@ grant update(workout_titles) on public.ritmo_groups to authenticated;
 grant insert,update on public.ritmo_profiles to authenticated;
 grant insert,delete on public.ritmo_checkins to authenticated;
 grant insert on public.ritmo_messages to authenticated;
+grant update(read_at) on public.ritmo_messages to authenticated;
 grant insert,update,delete on public.ritmo_training_logs to authenticated;
 
 do $$ begin
@@ -255,4 +270,19 @@ do $$ begin
     alter publication supabase_realtime add table public.ritmo_messages;
   end if;
 end $$;
+
+drop policy if exists ritmo_group_presence_receive on realtime.messages;
+create policy ritmo_group_presence_receive on realtime.messages for select to authenticated using (
+  extension='presence' and exists (
+    select 1 from public.ritmo_members m
+    where m.user_id=auth.uid() and realtime.topic()='ritmo-presence:'||m.group_id::text
+  )
+);
+drop policy if exists ritmo_group_presence_publish on realtime.messages;
+create policy ritmo_group_presence_publish on realtime.messages for insert to authenticated with check (
+  extension='presence' and exists (
+    select 1 from public.ritmo_members m
+    where m.user_id=auth.uid() and realtime.topic()='ritmo-presence:'||m.group_id::text
+  )
+);
 
