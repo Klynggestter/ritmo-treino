@@ -1,6 +1,6 @@
 # Ritmo — treino a dois
 
-Aplicativo web instalável (PWA) para vocês usarem no iPhone como ícone de app. Inclui perfil, plano semanal conjunto, nomes de exercícios mais familiares, demonstrações em duas posições, check-in com foto, ideias flexíveis de alimentação, acompanhamento diário e chat privado para duas contas.
+Aplicativo web instalável (PWA) para vocês usarem no iPhone como ícone de app. Inclui perfis e planos individuais, catálogo de exercícios com nomes personalizados por perfil, check-in com foto, nutrição flexível, acompanhamento diário, convites e chat privado para duas contas.
 
 ## Publicar online sem pagar
 
@@ -13,7 +13,7 @@ O app é hospedado no GitHub Pages e usa o Supabase para login, banco de dados, 
 3. No seu computador, abra `supabase/schema.sql`, copie o arquivo inteiro, cole no editor SQL e clique em **Run**. Isso prepara login, tabelas, fotos privadas e as regras de acesso do casal.
 4. No painel do projeto, abra **Connect** (ou **Settings → API Keys**). Copie **Project URL** e **Publishable key** (ou a chave `anon` legada). Confira que a URL do projeto termina em `.supabase.co`, não `.supabase.com`. Não copie a chave `service_role`/`secret`.
 
-Ao atualizar o app com campos novos no banco (por exemplo, duração de cardio), execute novamente o `supabase/schema.sql`; as alterações de coluna usam `IF NOT EXISTS`.
+Ao atualizar o app com campos novos no banco, execute novamente o `supabase/schema.sql`; as alterações são idempotentes. A versão atual adiciona recibos de leitura e regras de canal privado para presença em tempo real. Rode o arquivo completo antes de testar o status online; o sexo é salvo dentro do JSON privado do perfil e não exige coluna nova.
 
 ### 2. Configurar e publicar os arquivos no GitHub Pages
 
@@ -38,7 +38,7 @@ O app envia o endereço atual do GitHub Pages como retorno do e-mail de confirma
 2. Crie uma conta com seu e-mail e uma senha. Confirme o e-mail se solicitado.
 3. Toque em **Criar grupo e gerar convite** e envie o código somente para sua esposa.
 4. Ela abre o mesmo endereço, cria a própria conta, confirma o e-mail se solicitado e cola o código em **Entrar no grupo**.
-5. Cada um preenche seu perfil. Escolham dias de treino em comum; o plano monta a rotina compartilhada e adapta as opções conforme os perfis.
+5. Cada um preenche seu próprio perfil. Os planos, dias disponíveis (1 a 7), histórico, cargas e nomes personalizados dos exercícios são independentes.
 6. Depois que as duas contas estiverem criadas, você pode voltar ao Supabase em **Authentication → Settings** e desligar **Allow new users to sign up**. Vocês continuam entrando normalmente, mas novas contas não poderão ser criadas no projeto. [Configuração de autenticação](https://supabase.com/docs/guides/auth/general-configuration)
 
 ### 5. Instalar como ícone no iPhone
