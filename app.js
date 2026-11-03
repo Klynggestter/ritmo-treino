@@ -313,7 +313,7 @@ function renderNutrition(){
 }
 window.addEventListener("hashchange",render);
 window.addEventListener("ritmo:social-ready",(event)=>{const state=event.detail;if(state?.user&&state?.group){const own=state.profiles.find(item=>item.user_id===state.user.id);const other=state.profiles.find(item=>item.user_id!==state.user.id);if(own)data.profile=window.RitmoSocial.appProfile(own);else if(data.profile)window.RitmoSocial.saveProfile(data.profile);data.partner=window.RitmoSocial.appProfile(other);data.workoutTitles={...(state.group.workout_titles||{}),...(data.workoutTitles||{})};saveData();if(location.hash!=="#/chat")render();}});
-if("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("./sw.js?v=6",{updateViaCache:"none"}).catch(()=>{});
+if("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("./sw.js?v=7",{updateViaCache:"none"}).catch(()=>{});
 render();
 window.RitmoSocial?.bootstrap();
 function refreshAtLocalMidnight() {
