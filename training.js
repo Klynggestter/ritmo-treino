@@ -47,7 +47,8 @@
     ],
     biceps: [
       exercise("Rosca bíceps sentada na máquina", "Parte da frente dos braços · 10–15 repetições", ["cotovelo"], "curl", "Mantenha os braços apoiados e evite balançar o tronco."),
-      exercise("Rosca no cabo", "Bíceps · 10–15 repetições", ["cotovelo"], "curl", "Use uma carga que permita controlar a descida."),
+      exercise("Rosca direta na polia baixa", "Bíceps · 10–15 repetições", ["cotovelo"], "curl", "Use a barra reta na polia baixa, mantenha os cotovelos junto ao tronco e controle a volta."),
+      exercise("Rosca martelo na polia com corda", "Bíceps, braquial e antebraço · 10–15 repetições", ["cotovelo"], "curl", "Use a corda na polia baixa e mantenha a pegada neutra, com as palmas voltadas uma para a outra."),
       exercise("Rosca martelo com halteres", "Bíceps e antebraço · 8–12 repetições", ["cotovelo"], "curl", "Mantenha os punhos neutros e os cotovelos próximos ao corpo."),
     ],
     triceps: [
@@ -131,54 +132,72 @@
   const titleFor = {fullA:"Corpo inteiro A",fullB:"Corpo inteiro B",fullC:"Corpo inteiro C",upperA:"Tronco · peito, costas e braços A",upperB:"Tronco · peito, costas e braços B",lowerA:"Pernas e glúteos A",lowerB:"Pernas e glúteos B",pushA:"Peito, ombros e tríceps A",pushB:"Peito, ombros e tríceps B",pullA:"Costas e bíceps A",pullB:"Costas e bíceps B",legsA:"Pernas e glúteos A",legsB:"Pernas e glúteos B",conditioning:"Condicionamento e core"};
   const areas = ["segunda-feira","terça-feira","quarta-feira","quinta-feira","sexta-feira","sábado","domingo"];
   function choose(key, variant, equipment="Academia completa") { const catalog=equipment==="Em casa sem equipamentos"?homeBare:equipment==="Em casa com equipamentos"?homeGear:bank;const options=catalog[key]||bank[key]||bank.core;return options[variant%options.length]; }
-  function makeSession(profile, partner, kind, variant, dayIndex) {
-    const people=[profile, ...(partner?[partner]:[])];
-    const minutes=Math.min(...people.map(person=>Number(person.minutes)||60));
-    const cardioMinutes=Math.min(...people.map(person=>Number(person.cardioMinutes??15)));
+  const muscleKeys={"Quadríceps":["squat"],"Glúteos":["glute"],"Posteriores de coxa":["hamstring","hinge"],"Panturrilhas":["calves"],"Peito":["chest"],"Costas":["row","verticalPull"],"Ombros":["shoulder"],"Bíceps":["biceps"],"Tríceps":["triceps"],"Abdômen e core":["core"]};
+  function keysForMuscles(names=[]){return names.flatMap(name=>muscleKeys[name]||[]);}
+  function makeSession(profile, kind, variant, dayIndex, primaryGroups, secondaryGroups) {
+    const minutes=Number(profile.minutes)||60;const cardioMinutes=Number(profile.cardioMinutes??15);
     const count=minutes<=30?4:minutes<=45?5:minutes<=60?6:minutes<=75?7:8;
-    const keys=(mixed[kind]||mixed.fullA).filter(key=>key!=="cardio").slice(0,count);
-    if(profile.goal==="Mobilidade e postura"&&keys.length)keys[keys.length-1]="mobility";
-    const members=people.map((person,index)=>({name:person.name||`Pessoa ${index+1}`,profile:person}));
+    const base=(mixed[kind]||mixed.fullA).filter(key=>key!=="cardio");
+    const focused=keysForMuscles(primaryGroups);
+    const secondary=keysForMuscles(secondaryGroups);
+    const wantsGlutes=[...primaryGroups,...secondaryGroups].includes("Glúteos");
+    const safeBase=wantsGlutes?base:base.filter(key=>key!=="glute");
+    let keys=[...new Set([...focused,...safeBase,...secondary])];
+    if(profile.goal==="Mobilidade e postura")keys=["mobility",...keys.filter(key=>key!=="mobility")];
+    keys=keys.slice(0,count);
+    const primarySet=new Set(focused),secondarySet=new Set(secondary);
+    const baseSets=profile.experience==="Iniciante"?2:3;
+    const volume=profile.volumeLevel||"Moderado";
     const exercises=keys.map((key,index)=>{
-      const variations=members.map((member,personIndex)=>{
-        const offset=variant*3+index+dayIndex+personIndex*2;
-        let item=choose(key,offset,member.profile.equipment);
-        const area=String(member.profile.injuryArea||"").toLowerCase();
-        const catalog=member.profile.equipment==="Em casa sem equipamentos"?homeBare:member.profile.equipment==="Em casa com equipamentos"?homeGear:bank;
-        const options=catalog[key]||bank[key]||bank.core;
-        const alternatives=area&&area!=="nenhuma"?options.filter(option=>!option.areas.includes(area)):options;
-        const adapted=!!(alternatives.length&&alternatives.length<options.length);
-        const needsAttention=!!(area&&area!=="nenhuma"&&!alternatives.length&&item.areas.includes(area));
-        if(adapted)item=alternatives[offset%alternatives.length];
-        const sets=member.profile.experience==="Iniciante"?2:3;
-        let detail=item.detail.replace(/\d+ séries/,`${sets} séries`);
-        if(member.profile.goal==="Hipertrofia e força") detail=detail.replace(/8–12|10–15|8–10|6–10/,"6–10");
-        if(member.profile.goal==="Resistência física") detail=detail.replace(/6–10|8–12|10–15|8–10/,"10–15");
-        return {name:member.name,item:{...item,detail,kind:key},adapted,needsAttention,limitations:member.profile.limitations||""};
-      });
-      return {kind,key,members:variations};
+      const offset=variant*3+index+dayIndex;
+      let item=choose(key,offset,profile.equipment);
+      const area=String(profile.injuryArea||"").toLowerCase();
+      const catalog=profile.equipment==="Em casa sem equipamentos"?homeBare:profile.equipment==="Em casa com equipamentos"?homeGear:bank;
+      const options=catalog[key]||bank[key]||bank.core;
+      const alternatives=area&&area!=="nenhuma"?options.filter(option=>!option.areas.includes(area)):options;
+      const adapted=!!(alternatives.length&&alternatives.length<options.length);
+      const needsAttention=!!(area&&area!=="nenhuma"&&!alternatives.length&&item.areas.includes(area));
+      if(adapted)item=alternatives[offset%alternatives.length];
+      const prioritized=primarySet.has(key),secondaryPriority=secondarySet.has(key);
+      const adjustment=volume==="Alto"&&prioritized?1:volume==="Baixo"?-1:0;
+      const sets=Math.max(1,Math.min(5,baseSets+adjustment));
+      let detail=item.detail.replace(/\d+ séries/,`${sets} séries`);
+      if(profile.goal==="Hipertrofia e força") detail=detail.replace(/8–12|10–15|8–10|6–10/,"6–12");
+      if(profile.goal==="Resistência física") detail=detail.replace(/6–10|8–12|10–15|8–10/,"10–15");
+      if(profile.intensityLevel==="Leve")detail+=` · esforço confortável (3–4 repetições em reserva)`;
+      else if(profile.intensityLevel==="Desafiadora")detail+=` · esforço firme, sem perder a técnica (1–3 em reserva)`;
+      const priority=prioritized?"Prioridade principal":secondaryPriority?"Prioridade secundária":"Complementar";
+      return {kind:key,key,members:[{name:profile.name||"Atleta",userId:profile.userId||null,item:{...item,detail,kind:key},sets,priority,adapted,needsAttention,limitations:profile.limitations||""}]};
     });
-    if(cardioMinutes>0){
-      exercises.push({kind:"cardio",key:"cardio",members:members.map((member,personIndex)=>{const cardio=choose("cardio",variant+dayIndex+personIndex,member.profile.equipment);return{name:member.name,item:{...cardio,detail:`${Number(member.profile.cardioMinutes??15)} minutos · ritmo confortável`,kind:"cardio"},adapted:false,needsAttention:false,limitations:member.profile.limitations||""};})});
-    }
-    return {title:titleFor[kind]||kind,icon:"◒",weekday:areas[dayIndex],index:dayIndex,minutes,exercises,kind,rest:false,cardioMinutes};
+    if(cardioMinutes>0){const item=choose("cardio",variant+dayIndex,profile.equipment);exercises.push({kind:"cardio",key:"cardio",members:[{name:profile.name||"Atleta",userId:profile.userId||null,item:{...item,detail:`${cardioMinutes} minutos · ritmo confortável`,kind:"cardio"},sets:0,priority:"Complementar",adapted:false,needsAttention:false,limitations:profile.limitations||""}]});}
+    return {title:titleFor[kind]||kind,icon:"◒",weekday:areas[dayIndex],index:dayIndex,minutes,exercises,kind,rest:false,cardioMinutes,primaryGroups,secondaryGroups};
   }
-  function buildWeek(profile, partner=null) {
+  function buildWeek(profile) {
     const days=Array.from({length:7},(_,index)=>({weekday:areas[index],index,rest:true,title:"Recuperação",icon:"☼",minutes:0,exercises:[]}));
-    const fallback={2:[0,3],3:[0,2,4],4:[0,1,3,5],5:[0,1,3,4,5],6:[0,1,2,3,4,5]};
-    const userDays=Array.isArray(profile.daysOfWeek)?profile.daysOfWeek.map(Number).filter(day=>day>=0&&day<7):fallback[Number(profile.days)]||fallback[3];
-    const partnerDays=partner?(Array.isArray(partner.daysOfWeek)?partner.daysOfWeek.map(Number).filter(day=>day>=0&&day<7):fallback[Number(partner.days)]||fallback[3]):userDays;
-    const sharedDays=[...new Set(userDays)].filter(day=>partnerDays.includes(day)).sort((a,b)=>a-b);
-    if(partner&&sharedDays.length<2){days[0].scheduleWarning=true;days[0].warning="Escolham ao menos dois dias em comum para montar a semana juntos.";return days;}
-    const requested=Math.max(2,Math.min(6,partner?Math.min(Number(profile.days)||3,Number(partner.days)||3):Number(profile.days)||3));
-    const count=Math.max(2,Math.min(requested,sharedDays.length));
-    const hasAdjacent=sharedDays.some((day,index)=>index>0&&day-sharedDays[index-1]===1)||(sharedDays[0]===0&&sharedDays.at(-1)===6);
-    let schedule=weeks[count]||weeks[3];
-    if(count===2&&hasAdjacent)schedule=[[0,"upperA","Parte superior"],[1,"lowerA","Parte inferior"]];
-    if(count===3&&hasAdjacent)schedule=[[0,"pushA","Empurrar"],[1,"legsA","Pernas"],[2,"pullA","Puxar"]];
-    schedule.forEach(([slot,kind,title],variant)=>{const day=sharedDays[slot];days[day]=makeSession(profile,partner,kind,variant,day);days[day].title=titleFor[kind]||title;});
-    const people=[profile,...(partner?[partner]:[])];
-    days.forEach(day=>{if(day.rest)day.cardio=people.map(person=>({name:person.name||"Atleta",minutes:Number(person.cardioMinutes??15)}));});
+    const fallback={2:[0,3],3:[0,2,4],4:[0,1,3,5],5:[0,1,2,4,5],6:[0,1,2,3,4,5]};
+    const workoutDays=Array.isArray(profile.daysOfWeek)?[...new Set(profile.daysOfWeek.map(Number).filter(day=>day>=0&&day<7))].sort((a,b)=>a-b):fallback[Number(profile.days)]||fallback[3];
+    const count=Math.max(2,Math.min(6,workoutDays.length||Number(profile.days)||3));
+    const primary=(profile.primaryMuscles||[]).slice(0,3),secondary=(profile.secondaryMuscles||[]).filter(group=>!primary.includes(group)).slice(0,4);
+    const pref=profile.trainingSplit||"Automática";
+    let split;
+    if(pref==="Corpo todo"||(pref==="Automática"&&count<=3))split=Array.from({length:count},(_,i)=>["fullA","fullB","fullC"][i%3]);
+    else if(pref==="Superior / inferior"||count===4)split=Array.from({length:count},(_,i)=>i%2?"lowerA":"upperA");
+    else if(pref==="Push / pull / pernas"||count>=6)split=Array.from({length:count},(_,i)=>["pushA","pullA","legsA"][i%3]);
+    else split=["upperA","lowerA","upperB","lowerB","fullC"];
+    const titleMap={fullA:"Corpo todo A",fullB:"Corpo todo B",fullC:"Corpo todo C",upperA:"Tronco A",upperB:"Tronco B",lowerA:"Membros inferiores A",lowerB:"Membros inferiores B",pushA:"Empurrar",pullA:"Puxar",legsA:"Pernas"};
+    workoutDays.slice(0,count).forEach((dayIndex,slot)=>{
+      const kind=split[slot]||"fullA";
+      const rotatedPrimary=primary.length?[primary[slot%primary.length],...primary.filter((_,i)=>i!==slot%primary.length)]:[];
+      const focus=rotatedPrimary.slice(0,2);
+      const focusedKeys=keysForMuscles(focus);
+      const base=(mixed[kind]||mixed.fullA).filter(key=>key!=="cardio");
+      const secondaryKeys=keysForMuscles(secondary);
+      const prioritizedBase=[...focusedKeys,...base,...secondaryKeys];
+      mixed[`__custom_${slot}`]=prioritizedBase;
+      const day=makeSession(profile,`__custom_${slot}`,slot,dayIndex,focus,secondary);
+      day.title=titleMap[kind]||"Treino";day.split=kind;days[dayIndex]=day;
+    });
+    days.forEach(day=>{if(day.rest)day.cardio=Number(profile.cardioMinutes??15)>0?[{name:profile.name||"Atleta",minutes:Number(profile.cardioMinutes??15)}]:[];});
     return days;
   }
   window.TrainingPlanner={buildWeek,bank};
