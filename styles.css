@@ -84,3 +84,57 @@ body{font-family:Inter,-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;colo
 .medal-track{height:4px;margin-top:auto;background:#e9ece5;border-radius:99px;overflow:hidden}.medal-track i{display:block;height:100%;background:#9eb66b;border-radius:99px}
 @media(max-width:370px){.medal-grid{grid-template-columns:1fr}.nutrition-hero{grid-template-columns:minmax(0,1fr) 76px;gap:8px}.nutrition-bmi{width:72px;height:72px}}
 
+/* Ritmo 2.0 — app-wide mobile polish and useful tap targets */
+:root{--green:#173b2a;--lime:#d5f273;--ink:#19251d;--muted:#717d72;--paper:#fffefa;--line:#e4e9de;--shadow:0 12px 28px rgba(25,46,31,.07)}
+body{background:linear-gradient(180deg,#e8eddf 0,#f5f5ef 260px,#f5f5ef 100%)}
+.app-shell{background:transparent;box-shadow:none}
+.topbar{background:rgba(245,245,239,.91);border-bottom:1px solid rgba(35,57,39,.08)}
+#app{padding:22px 16px calc(36px + env(safe-area-inset-bottom))}
+.page-title{font-size:clamp(31px,8vw,38px);line-height:1.01;letter-spacing:-1.6px}
+.subhead{font-size:14px;line-height:1.65;color:#66736a}
+.hero{min-height:248px;border-radius:30px;padding:23px;background:radial-gradient(circle at 95% 14%,rgba(211,243,107,.22) 0 34px,transparent 35px),linear-gradient(145deg,#123522,#28543a);box-shadow:0 19px 35px rgba(23,59,42,.18)}
+.hero h1{font-size:clamp(30px,8vw,37px);line-height:1.04;max-width:12ch;margin:15px 0 10px}
+.hero p{font-size:13px;line-height:1.55;max-width:30ch}
+.hero .button{background:var(--lime);box-shadow:0 8px 18px rgba(8,20,13,.15)}
+.section-row{margin:28px 0 14px}
+.stats-grid{gap:12px}.stat-card{min-height:98px;padding:16px;border-radius:21px}.stat-value{font-size:29px}
+.card,.nutrition-card,.day-card{box-shadow:0 7px 21px rgba(29,48,32,.045)}
+.workout-card{padding:15px;border-radius:21px}.workout-symbol{background:#e6eddb;color:#254631}
+.home-shortcuts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:13px 0 22px}
+.shortcut-card{min-width:0;display:flex;align-items:center;gap:9px;padding:13px 11px;background:#fffefa;border:1px solid #e5e9df;border-radius:19px;box-shadow:0 7px 18px rgba(28,48,32,.05)}
+.shortcut-card>span:nth-child(2){min-width:0;flex:1}.shortcut-card strong,.shortcut-card small{display:block}.shortcut-card strong{font:750 12px Manrope,sans-serif;line-height:1.25}.shortcut-card small{margin-top:4px;color:#758176;font-size:10px;line-height:1.35;overflow-wrap:anywhere}
+.shortcut-icon{width:33px;height:33px;flex:none;display:grid;place-items:center;border-radius:12px;background:#eaf0df;color:#294a32;font-size:20px}.shortcut-food .shortcut-icon{background:#f5edcf}.shortcut-card .arrow{font-size:17px}
+.day-card{padding:16px;border-radius:21px}.day-card-actions{gap:9px;flex-wrap:wrap}.small-button{min-height:38px;padding:9px 12px;border-radius:12px}
+.detail-hero{border-radius:28px;padding:23px;background:linear-gradient(145deg,#153b29,#315940);box-shadow:0 16px 31px rgba(23,59,42,.14)}
+.detail-hero h1{font-size:clamp(28px,7.5vw,35px);line-height:1.05;letter-spacing:-1px}
+.exercise-list{gap:12px}.exercise-card{border-radius:21px;overflow:hidden;border:1px solid #e5e9df;background:#fffefa;box-shadow:0 7px 18px rgba(29,48,32,.045)}
+.exercise{min-height:82px;padding:15px;gap:12px}.exercise-number{background:#e7eedb;border-radius:12px;color:#314f36}
+.partner-line strong{font-size:14px;line-height:1.35;color:#26382b}.partner-line small{font-size:11px;line-height:1.5;color:#748076}
+.exercise-detail{padding:0 15px 12px}.exercise-detail summary{padding:13px 0;font-size:12px;color:#31523a;font-weight:750}
+.exercise-demo{display:flex;flex-direction:column;gap:10px;margin:0;padding:12px;border-radius:17px;background:#f2f4ed;border:1px solid #e7ebdf}
+.exercise-demo p{font-size:13px;line-height:1.6;color:#2d3f31;margin:0}.exercise-demo small{font-size:10px;line-height:1.55;color:#718072}
+.exercise-photo-pair{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%}
+.exercise-photo-pair figure{position:relative;min-width:0;margin:0;overflow:hidden;border-radius:13px;background:#e4e9df;aspect-ratio:1/1.04}
+.exercise-photo-pair img{display:block;width:100%;height:100%;object-fit:cover;object-position:center;background:#eef0e9}
+.exercise-photo-pair figcaption{position:absolute;bottom:0;left:0;right:0;padding:7px 4px;background:linear-gradient(transparent,rgba(14,28,18,.83));color:white;text-align:center;font-size:8px;font-weight:800;letter-spacing:.6px}
+.exercise-photo-pair .image-unavailable{display:none}.exercise-credit{align-self:flex-end;color:#5b705f;font-size:10px;font-weight:700;text-decoration:underline;text-underline-offset:2px}
+.movement-svg{display:none!important}
+.checkin-hero{padding:17px;border-radius:21px;background:linear-gradient(110deg,#edf2e4,#e2ebd8)}
+.form-card{border-radius:23px}.photo-picker{min-height:210px;border:1px dashed #9aaa91;background:linear-gradient(145deg,#f5f7f1,#edf2e6)}.photo-placeholder{height:210px}.photo-placeholder b{width:48px;height:48px;border-radius:17px;display:grid;place-items:center;background:#d8ed9a;font-size:30px}
+.history-content{border:1px solid #e6e9e1;box-shadow:0 5px 15px rgba(35,49,36,.04)}
+.chat-feed{border:1px solid #e5e9df;background:#fbfcf8;min-height:260px}.chat-compose{padding:9px;border-radius:17px;border:1px solid #e0e5db;background:#fffefa}.chat-compose input{min-height:43px}.chat-message{max-width:88%}
+.group-card{padding:18px;border-radius:22px;background:linear-gradient(140deg,#e8eedc,#f5f6ef);border:1px solid #e1e8d7}
+.notice{margin:15px 0;padding:15px;border:1px solid #e3e8dc;background:#eef1e8;color:#536256;font-size:11px;line-height:1.65}
+.nutrition-page{padding-bottom:7px}.nutrition-hero{position:relative;min-height:204px;grid-template-columns:minmax(0,1fr) 82px;padding:20px;overflow:hidden;background:radial-gradient(circle at 105% 10%,rgba(209,241,106,.2) 0 70px,transparent 71px),linear-gradient(145deg,#123623,#28533a)}
+.nutrition-hero-copy{min-width:0}.nutrition-hero h2{font-size:23px;max-width:15ch}.nutrition-hero p{max-width:34ch}.nutrition-hero-link{display:inline-flex;gap:8px;margin-top:13px;color:#e0f298;font-size:12px;font-weight:800}.nutrition-bmi{width:78px;height:78px}.nutrition-dashboard{display:grid;grid-template-columns:1.1fr .9fr;gap:10px;margin-top:12px}
+.nutrition-progress-card,.water-card{min-width:0;padding:13px;border:1px solid #e4e9de;border-radius:19px;background:#fffefa;box-shadow:0 7px 18px rgba(29,48,32,.045)}
+.nutrition-progress-head{display:flex;align-items:center;gap:8px;margin-bottom:11px}.nutrition-progress-head strong,.water-card strong{display:block;font:750 11px Manrope,sans-serif}.nutrition-progress-head small,.water-card small{display:block;margin-top:3px;color:#7a857a;font-size:9px;line-height:1.35}.dashboard-icon{width:29px;height:29px;flex:none;display:grid;place-items:center;border-radius:10px;background:#e8efdc;color:#315537}
+.water-card{display:flex;align-items:center;justify-content:space-between;gap:5px}.water-card>div:first-child{min-width:0}.water-controls{display:flex;gap:4px}.water-controls button{width:29px;height:34px;padding:0;border:0;border-radius:10px;background:#e9efdc;color:#274631;font-size:18px;font-weight:700}
+.nutrition-meal-list{display:grid;gap:10px}.meal-slot{display:block;padding:14px;border:1px solid #e4e9de;border-radius:20px;background:#fffefa;box-shadow:0 6px 17px rgba(29,48,32,.045);transition:background .2s,border-color .2s}
+.meal-slot-top{display:flex;align-items:center;gap:10px}.meal-index{width:38px;height:38px;border-radius:13px;flex:none;font-size:19px}.meal-slot-top>div{min-width:0;flex:1}.meal-slot-top small{display:block;margin-bottom:3px;color:#819081;font-size:9px;font-weight:800;letter-spacing:1px}.meal-slot-top strong{font:750 14px Manrope,sans-serif}.meal-slot p.meal-choice{margin:13px 0 11px;padding:11px 12px;border-radius:13px;background:#f4f5ef;color:#49594d;font-size:12px;line-height:1.55}
+.meal-check{display:flex;align-items:center;gap:5px;color:#758076;font-size:10px;font-weight:700}.meal-check input{width:18px;height:18px;accent-color:#3d6642}.meal-done{background:#f4f7ea;border-color:#cfdbb7}.meal-done .meal-index{background:#ddecbe}
+.meal-swap{min-height:36px;padding:8px 11px;border:1px solid #e0e7d8;border-radius:11px;background:transparent;color:#416047;font-size:11px;font-weight:750}.nutrition-training{margin-top:15px;padding:17px;border-radius:20px}.nutrition-training h2{font-size:18px}.nutrition-habits{padding:16px;border-radius:21px;border:1px solid #e3e8df;background:#fffefa;box-shadow:0 6px 17px rgba(29,48,32,.04)}.nutrition-habits .section-row{margin:3px 0 8px}.nutrition-habits .habit-row{font-size:12px;min-height:50px}.nutrition-habits .habit-row input{width:19px;height:19px}.nutrition-note{margin-top:15px}.nutrition-note textarea{min-height:72px}.nutrition-preferences{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:15px;margin:13px 0;border-radius:19px;background:#e9efdf}.nutrition-preferences p{margin:8px 0 0;color:#637166;font-size:12px;line-height:1.5}.nutrition-preferences .text-link{flex:none}
+.meal-slot .meal-check span{white-space:nowrap}
+@media(max-width:370px){.home-shortcuts{grid-template-columns:1fr}.nutrition-dashboard{grid-template-columns:1fr}.water-card{min-height:69px}.nutrition-hero{grid-template-columns:minmax(0,1fr) 68px}.nutrition-bmi{width:65px;height:65px}.nutrition-bmi strong{font-size:17px}}
+@media(min-width:540px){.app-shell{background:#f5f5ef}.nutrition-page{max-width:100%}.nutrition-meal-list{grid-template-columns:1fr 1fr}.nutrition-training,.nutrition-habits{grid-column:1/-1}.nutrition-dashboard{grid-template-columns:1.1fr .9fr}}
+
