@@ -12,6 +12,6 @@
   <rect width="512" height="512" rx="128" fill="#edf7f8"/>
   <rect x="25" y="25" width="462" height="462" rx="116" fill="url(#a)"/>
   <path d="M149 369V143h112c64 0 103 37 103 92 0 39-21 68-57 82l68 52h-76l-57-45h-34v45zm59-94h51c30 0 46-14 46-39s-16-39-46-39h-51z" fill="#fff"/>
-  <path d="M357 342h38v28h-38z" rx="8" fill="url(#b)"/>
+  <rect x="357" y="342" width="38" height="28" rx="8" fill="url(#b)"/>
 </svg>
 
