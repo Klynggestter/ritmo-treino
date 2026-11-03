@@ -1,0 +1,14 @@
+{
+  "name": "Ritmo — treino no seu ritmo",
+  "short_name": "Ritmo",
+  "description": "Organize seus treinos e registre seus check-ins.",
+  "lang": "pt-BR",
+  "start_url": "./#/inicio",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f6f5f0",
+  "theme_color": "#f6f5f0",
+  "icons": [
+    { "src": "assets/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
