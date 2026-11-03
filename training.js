@@ -123,7 +123,7 @@
     5: [[0,"upperA","Parte superior A"],[1,"lowerA","Parte inferior A"],[2,"upperB","Parte superior B"],[3,"lowerB","Parte inferior B"],[4,"conditioning","Condicionamento e core"]],
     6: [[0,"pushA","Empurrar A"],[1,"pullA","Puxar A"],[2,"legsA","Pernas A"],[3,"pushB","Empurrar B"],[4,"pullB","Puxar B"],[5,"legsB","Pernas B"]],
   };
-  const titleFor = {fullA:"Corpo todo A",fullB:"Corpo todo B",fullC:"Corpo todo C",upperA:"Parte superior A",upperB:"Parte superior B",lowerA:"Parte inferior A",lowerB:"Parte inferior B",pushA:"Empurrar A",pushB:"Empurrar B",pullA:"Puxar A",pullB:"Puxar B",legsA:"Pernas A",legsB:"Pernas B",conditioning:"Condicionamento e core"};
+  const titleFor = {fullA:"Corpo inteiro A",fullB:"Corpo inteiro B",fullC:"Corpo inteiro C",upperA:"Tronco · peito, costas e braços A",upperB:"Tronco · peito, costas e braços B",lowerA:"Pernas e glúteos A",lowerB:"Pernas e glúteos B",pushA:"Peito, ombros e tríceps A",pushB:"Peito, ombros e tríceps B",pullA:"Costas e bíceps A",pullB:"Costas e bíceps B",legsA:"Pernas e glúteos A",legsB:"Pernas e glúteos B",conditioning:"Condicionamento e core"};
   const areas = ["segunda-feira","terça-feira","quarta-feira","quinta-feira","sexta-feira","sábado","domingo"];
   function choose(key, variant, equipment="Academia completa") { const catalog=equipment==="Em casa sem equipamentos"?homeBare:equipment==="Em casa com equipamentos"?homeGear:bank;const options=catalog[key]||bank[key]||bank.core;return options[variant%options.length]; }
   function makeSession(profile, partner, kind, variant, dayIndex) {
@@ -169,10 +169,11 @@
     let schedule=weeks[count]||weeks[3];
     if(count===2&&hasAdjacent)schedule=[[0,"upperA","Parte superior"],[1,"lowerA","Parte inferior"]];
     if(count===3&&hasAdjacent)schedule=[[0,"pushA","Empurrar"],[1,"legsA","Pernas"],[2,"pullA","Puxar"]];
-    schedule.forEach(([slot,kind,title],variant)=>{const day=sharedDays[slot];days[day]=makeSession(profile,partner,kind,variant,day);days[day].title=title;});
+    schedule.forEach(([slot,kind,title],variant)=>{const day=sharedDays[slot];days[day]=makeSession(profile,partner,kind,variant,day);days[day].title=titleFor[kind]||title;});
     const people=[profile,...(partner?[partner]:[])];
     days.forEach(day=>{if(day.rest)day.cardio=people.map(person=>({name:person.name||"Atleta",minutes:Number(person.cardioMinutes??15)}));});
     return days;
   }
   window.TrainingPlanner={buildWeek,bank};
 })();
+
