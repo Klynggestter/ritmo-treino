@@ -74,7 +74,7 @@ function addWorkoutPlanControls(){
 }
 function render() {
   if (!location.hash) location.hash = "#/inicio";
-  const route = location.hash.replace(/^#/, "");
+  const route = location.hash.replace(/^#/, "").split("?")[0];
   document.getElementById("avatar-initial").textContent = (data.profile?.name || "R").trim().charAt(0).toUpperCase();
   setActiveNav(route);
   if (route === "/perfil") renderProfile();
@@ -152,14 +152,22 @@ function movementGraphic(item={}) {
   else if(lower.includes("hack"))slug="hack-squat";
   else if(lower.includes("halter à frente"))slug="goblet-squat";
   else if(lower.includes("elevação pélvica"))slug="hip-thrust";
-  else if(lower.includes("abdutora"))slug="hip-abduction-machine";
+  else if(lower.includes("abdutora"))slug="hip-abduction";
   else if(lower.includes("flexora"))slug="leg-curl";
   else if(lower.includes("supino na máquina"))slug="chest-press-machine";
-  else if(lower.includes("supino com halteres")||lower.includes("supino no chão"))slug="dumbbell-bench-press";
+  else if(lower.includes("supino com halteres")||lower.includes("supino no chão"))slug="db-bench-press";
   else if(lower.includes("puxada alta")||lower.includes("puxada na máquina"))slug="lat-pulldown";
+  else if(lower.includes("remada sentada"))slug="seated-cable-row";
+  else if(lower.includes("puxada do cabo"))slug="face-pull";
+  else if(lower.includes("elevação lateral"))slug="dumbbell-lateral-raise";
+  else if(lower.includes("rosca"))slug="bicep-curl";
   else if(lower.includes("prancha"))slug="plank";
+  else if(lower.includes("panturrilha sentada"))slug="seated-calf-raise";
+  else if(lower.includes("tríceps"))slug="cable-triceps-pushdown";
   const base="https://raw.githubusercontent.com/RepDB/exercise-dataset/main/images/flat";
-  return `<div class="exercise-photo-pair" aria-label="Demonstração ilustrada de ${escapeHTML(name)}"><figure><img src="${base}/${slug}-start.webp" alt="Posição inicial de referência para ${escapeHTML(name)}" loading="lazy" onerror="this.closest('figure').classList.add('image-unavailable')"><figcaption>POSIÇÃO INICIAL</figcaption></figure><figure><img src="${base}/${slug}-peak.webp" alt="Ponto final de referência para ${escapeHTML(name)}" loading="lazy" onerror="this.closest('figure').classList.add('image-unavailable')"><figcaption>FASE DO MOVIMENTO</figcaption></figure></div><a class="exercise-credit" href="https://github.com/RepDB/exercise-dataset" target="_blank" rel="noreferrer">Exercise data by RepDB ↗</a>`;
+  const fallback=imageFor[type]||imageFor.squat;const single=slug==="plank";const start=single?`${base}/plank-main.webp`:`${base}/${slug}-start.webp`;const peak=single?`${base}/plank-main.webp`:`${base}/${slug}-peak.webp`;
+  const onerror=(phase)=>`if(!this.dataset.fallback){this.dataset.fallback='1';this.src='${base}/${fallback}-${phase}.webp'}else{this.closest('figure').classList.add('image-unavailable')}`;
+  return `<div class="exercise-photo-pair" aria-label="Demonstração ilustrada de ${escapeHTML(name)}"><figure><img src="${start}" alt="Posição inicial de referência para ${escapeHTML(name)}" loading="lazy" onerror="${onerror('start')}"><figcaption>POSIÇÃO INICIAL</figcaption></figure><figure><img src="${peak}" alt="Ponto final de referência para ${escapeHTML(name)}" loading="lazy" onerror="${onerror('peak')}"><figcaption>FASE DO MOVIMENTO</figcaption></figure></div><a class="exercise-credit" href="https://github.com/RepDB/exercise-dataset" target="_blank" rel="noreferrer">Exercise data by RepDB ↗</a>`;
 }
 function renderPlan() {
   if (!data.profile) { location.hash = "#/perfil"; return; }
@@ -211,13 +219,18 @@ function renderProgress() {
 function renderMedals(){
   const total=new Set(data.checkins.map(item=>item.date)).size;const streak=streakCount();
   const cardio=data.checkins.filter(item=>/corrida|caminhada|cardio|bicicleta/i.test(item.activity));const cardioCount=cardio.length;const bestCardio=Math.max(0,...cardio.map(item=>Number(item.durationMinutes)||0));
+  const cardioMinutes=cardio.reduce((sum,item)=>sum+(Number(item.durationMinutes)||0),0);
+  const variety=new Set(data.checkins.map(item=>(item.activity||"").trim().toLocaleLowerCase("pt-BR")).filter(Boolean)).size;
+  const weekTargets=data.checkins.filter(item=>/força|muscula|academia|treino/i.test(item.activity)).length;
   const definitions=[
-    ["Primeiro passo","Seu primeiro treino registrado",total,1,"✦"],["Trinca","3 treinos registrados",total,3,"✳"],["Ritmo constante","10 treinos registrados",total,10,"◒"],["20 presenças","20 dias com treino",total,20,"🏅"],["Meio século","50 treinos registrados",total,50,"🏆"],
-    ["Três dias","3 dias seguidos registrando treino",streak,3,"🔥"],["Uma semana","7 dias seguidos registrando treino",streak,7,"⚡"],["Quinzena","15 dias seguidos registrando treino",streak,15,"🌟"],["Mês em movimento","30 dias seguidos registrando treino",streak,30,"💎"],
-    ["Primeiro cardio","Uma corrida, caminhada ou pedal",cardioCount,1,"🚶"],["Cardio x5","5 sessões de cardio",cardioCount,5,"🚴"],["15 minutos","15 min numa sessão de cardio",bestCardio,15,"⏱️"],["Meia hora","30 min numa sessão de cardio",bestCardio,30,"⌚"],["45 minutos","45 min numa sessão de cardio",bestCardio,45,"🥇"],["Uma hora","60 min numa sessão de cardio",bestCardio,60,"🏁"],
-    ["Semana completa","Cumpriu a meta de check-ins da semana",sessionsThisWeek(),Math.max(1,sharedDays()),"📅"]
+    ["Começou com tudo","Seu primeiro dia ativo",total,1,"✦","bronze"],["Três encontros","3 dias diferentes de treino",total,3,"✳","bronze"],["Cinco presenças","5 dias ativos",total,5,"⚡","bronze"],["Dez no ritmo","10 dias ativos",total,10,"◒","silver"],["Vinte presenças","20 dias ativos",total,20,"🏅","silver"],["Trinta treinos","30 dias ativos",total,30,"🏆","gold"],["Meio século","50 dias ativos",total,50,"👑","gold"],["Centenária","100 dias ativos",total,100,"💯","diamond"],
+    ["Faísca","3 dias seguidos",streak,3,"🔥","bronze"],["Semana firme","7 dias seguidos",streak,7,"🌈","silver"],["Dez dias de ritmo","10 dias seguidos",streak,10,"💫","silver"],["Quinzena ativa","15 dias seguidos",streak,15,"🌟","gold"],["Vinte sem perder o passo","20 dias seguidos",streak,20,"🚀","gold"],["Mês em movimento","30 dias seguidos",streak,30,"💎","diamond"],
+    ["Primeiro cardio","Primeira caminhada, corrida ou pedal",cardioCount,1,"👟","bronze"],["Cardio x5","5 sessões de cardio",cardioCount,5,"🚴","bronze"],["Cardio x10","10 sessões de cardio",cardioCount,10,"🏃","silver"],["Cardio x25","25 sessões de cardio",cardioCount,25,"🥇","gold"],["Pulso ativo","15 minutos em uma sessão",bestCardio,15,"⏱️","bronze"],["Meia hora em movimento","30 minutos em uma sessão",bestCardio,30,"⌚","silver"],["45 minutos","45 minutos em uma sessão",bestCardio,45,"🥈","gold"],["Uma hora","60 minutos em uma sessão",bestCardio,60,"🏁","gold"],["Desafio de fôlego","90 minutos em uma sessão",bestCardio,90,"🌋","diamond"],["Horas acumuladas","300 minutos totais de cardio",cardioMinutes,300,"🌊","diamond"],
+    ["Variedade é força","Experimentou 3 atividades diferentes",variety,3,"🎨","bronze"],["Explorador","Experimentou 6 atividades diferentes",variety,6,"🧭","silver"],["Semana completa","Atingiu a meta semanal de treinos",sessionsThisWeek(),Math.max(1,sharedDays()),"📅","silver"],["Duas semanas no plano","14 check-ins registrados",total,14,"🗓️","silver"],["Compromisso de casal","10 dias de treino compartilhados",sharedDays(),10,"🤝","gold"],["Dupla constante","25 dias de treino compartilhados",sharedDays(),25,"💞","diamond"],
+    ["Voltou amanhã","Registrou atividade em 2 dias seguidos",streak,2,"🌱","bronze"],["Consistência de ouro","20 dias ativos no total",total,20,"✨","gold"],["Lenda do Ritmo","100 dias ativos no total",total,100,"🏆","diamond"]
   ];
-  const host=document.createElement("section");host.className="medals-section";host.innerHTML=`<div class="section-row"><div><div class="eyebrow">CONQUISTAS</div><h2>Medalhas do seu ritmo</h2></div><span class="group-tag">${definitions.filter(item=>item[2]>=item[3]).length}/${definitions.length} conquistadas</span></div><div class="medal-grid">${definitions.map(([name,description,value,target,icon])=>{const earned=value>=target;const progress=Math.min(100,Math.round(value/target*100));return `<article class="medal-card ${earned?"earned":"locked"}"><span class="medal-icon">${icon}</span><strong>${name}</strong><small>${earned?"Conquistada":description}</small><div class="medal-track"><i style="width:${progress}%"></i></div></article>`;}).join("")}</div><p class="form-note">As medalhas acompanham os registros salvos neste aparelho. Dias de descanso continuam importantes; não treine com dor só para manter uma sequência.</p>`;
+  const earnedCount=definitions.filter(item=>item[2]>=item[3]).length;
+  const host=document.createElement("section");host.className="medals-section";host.innerHTML=`<div class="section-row"><div><div class="eyebrow">CONQUISTAS</div><h2>Medalhas do seu ritmo</h2><p class="medal-caption">Pequenas vitórias, cada uma com seu brilho.</p></div><span class="group-tag">${earnedCount}/${definitions.length} conquistadas</span></div><div class="medal-grid">${definitions.map(([name,description,value,target,icon,tier])=>{const earned=value>=target;const progress=Math.min(100,Math.round(value/target*100));return `<article class="medal-card ${earned?"earned":"locked"}"><span class="medal-icon tier-${tier}" aria-hidden="true">${icon}</span><strong>${name}</strong><small>${earned?"Conquistada":description}</small><div class="medal-track"><i style="width:${progress}%"></i></div><span class="medal-progress">${Math.min(value,target)} / ${target}</span></article>`;}).join("")}</div><p class="form-note">As medalhas acompanham os registros salvos neste aparelho. Dias de descanso continuam importantes; não treine com dor só para manter uma sequência.</p>`;
   document.getElementById("app").appendChild(host);
 }
 function renderNutritionOld(){
@@ -300,7 +313,7 @@ function renderNutrition(){
 }
 window.addEventListener("hashchange",render);
 window.addEventListener("ritmo:social-ready",(event)=>{const state=event.detail;if(state?.user&&state?.group){const own=state.profiles.find(item=>item.user_id===state.user.id);const other=state.profiles.find(item=>item.user_id!==state.user.id);if(own)data.profile=window.RitmoSocial.appProfile(own);else if(data.profile)window.RitmoSocial.saveProfile(data.profile);data.partner=window.RitmoSocial.appProfile(other);data.workoutTitles={...(state.group.workout_titles||{}),...(data.workoutTitles||{})};saveData();if(location.hash!=="#/chat")render();}});
-if("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("./sw.js").catch(()=>{});
+if("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("./sw.js?v=6",{updateViaCache:"none"}).catch(()=>{});
 render();
 window.RitmoSocial?.bootstrap();
 function refreshAtLocalMidnight() {
