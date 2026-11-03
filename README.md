@@ -1,6 +1,6 @@
 # Ritmo — treino a dois
 
-Aplicativo web instalável (PWA) para vocês usarem no iPhone como ícone de app. Inclui perfil, plano semanal conjunto, treino com ilustrações, check-in com foto, alimentação ligada ao foco do perfil, acompanhamento diário e chat privado para duas contas.
+Aplicativo web instalável (PWA) para vocês usarem no iPhone como ícone de app. Inclui perfil, plano semanal conjunto, nomes de exercícios mais familiares, demonstrações em duas posições, check-in com foto, ideias flexíveis de alimentação, acompanhamento diário e chat privado para duas contas.
 
 ## Publicar online sem pagar
 
@@ -30,6 +30,8 @@ Ao atualizar o app com campos novos no banco (por exemplo, duração de cardio),
 3. Em **Redirect URLs**, adicione também o mesmo endereço. Salve.
 4. Em **Authentication → Sign In / Providers → Email**, deixe o provedor de e-mail habilitado. Com confirmação de e-mail ligada, cada um precisa abrir o e-mail recebido antes de entrar no app. Se não usarem confirmação, desative-a nessa opção do Supabase.
 
+O app envia o endereço atual do GitHub Pages como retorno do e-mail de confirmação. Se o link abrir a página padrão do GitHub Pages, confirme que tanto **Site URL** quanto **Redirect URLs** contêm o endereço com a pasta do repositório, por exemplo `https://SEU-USUARIO.github.io/ritmo-treino/`.
+
 ### 4. Criar o espaço só de vocês
 
 1. Abra o endereço publicado no Safari do iPhone e entre em **Chat**.
@@ -48,6 +50,8 @@ No iPhone de cada um: abra o link no Safari → toque em **Compartilhar** → **
 O repositório e a página do GitHub Pages são públicos no plano gratuito, então outras pessoas podem ver o código, abrir a página e criar uma conta. Isso não as coloca no grupo de vocês: o banco exige autenticação e as regras do projeto limitam os perfis, mensagens e check-ins aos integrantes do mesmo grupo de duas pessoas. As fotos ficam em armazenamento privado. Não coloque nome, peso, e-mail, senha ou foto no código. Para manter também o código/repositório privado, GitHub Pages no plano gratuito não atende a esse requisito.
 
 O Supabase Free oferece cotas adequadas para uso leve de duas pessoas, mas projetos com pouca atividade por uma semana podem ser pausados e precisam ser reativados no painel. Cotas e regras podem mudar: [planos e cotas](https://supabase.com/docs/guides/platform/billing-on-supabase) · [pausa por inatividade](https://supabase.com/docs/guides/platform/free-project-pausing).
+
+As ilustrações de exercício são fornecidas pelo [RepDB Exercise Dataset](https://github.com/RepDB/exercise-dataset), usado com atribuição conforme a licença gratuita do conjunto.
 
 ## Como o plano de treino trata observações e lesões
 
