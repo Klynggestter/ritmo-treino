@@ -5,10 +5,12 @@ create extension if not exists pgcrypto;
 create table if not exists public.ritmo_groups (
   id uuid primary key default gen_random_uuid(),
   name text not null default 'Nosso treino',
+  workout_titles jsonb not null default '{}'::jsonb,
   invite_code text not null unique default encode(gen_random_bytes(16), 'hex'),
   created_by uuid not null references auth.users(id) on delete cascade,
   created_at timestamptz not null default now()
 );
+alter table public.ritmo_groups add column if not exists workout_titles jsonb not null default '{}'::jsonb;
 
 create table if not exists public.ritmo_members (
   group_id uuid not null references public.ritmo_groups(id) on delete cascade,
@@ -45,6 +47,7 @@ create table if not exists public.ritmo_checkins (
   user_id uuid not null references auth.users(id) on delete cascade,
   activity text not null,
   caption text,
+  duration_minutes smallint check (duration_minutes between 1 and 600),
   photo_path text,
   local_date date not null default current_date,
   participant_ids uuid[] not null default '{}',
@@ -52,6 +55,7 @@ create table if not exists public.ritmo_checkins (
   created_at timestamptz not null default now(),
   unique(group_id,user_id,local_date)
 );
+alter table public.ritmo_checkins add column if not exists duration_minutes smallint check (duration_minutes between 1 and 600);
 create index if not exists ritmo_checkins_group_time on public.ritmo_checkins(group_id, occurred_at desc);
 
 create table if not exists public.ritmo_messages (
@@ -108,6 +112,8 @@ alter table public.ritmo_messages enable row level security;
 
 drop policy if exists ritmo_group_read on public.ritmo_groups;
 create policy ritmo_group_read on public.ritmo_groups for select to authenticated using (public.ritmo_is_member(id));
+drop policy if exists ritmo_group_update on public.ritmo_groups;
+create policy ritmo_group_update on public.ritmo_groups for update to authenticated using (public.ritmo_is_member(id)) with check (public.ritmo_is_member(id));
 drop policy if exists ritmo_members_read on public.ritmo_members;
 create policy ritmo_members_read on public.ritmo_members for select to authenticated using (public.ritmo_is_member(group_id));
 drop policy if exists ritmo_profile_read on public.ritmo_profiles;
@@ -160,6 +166,7 @@ grant execute on function public.ritmo_all_participants_are_members(uuid,uuid[])
 grant execute on function public.ritmo_create_group(text) to authenticated;
 grant execute on function public.ritmo_join_group(text) to authenticated;
 grant select on public.ritmo_groups,public.ritmo_members,public.ritmo_profiles,public.ritmo_checkins,public.ritmo_messages to authenticated;
+grant update(workout_titles) on public.ritmo_groups to authenticated;
 grant insert,update on public.ritmo_profiles to authenticated;
 grant insert,delete on public.ritmo_checkins to authenticated;
 grant insert on public.ritmo_messages to authenticated;
@@ -169,3 +176,4 @@ do $$ begin
     alter publication supabase_realtime add table public.ritmo_messages;
   end if;
 end $$;
+
