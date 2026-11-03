@@ -28,10 +28,10 @@ let pickedPhoto = null;
 let toastTimer;
 
 function loadData() {
-  try { return { profile: null, partner: null, checkins: [], done: {}, nutrition:{}, ...(JSON.parse(localStorage.getItem(STORE_KEY)) || {}) }; }
-  catch { return { profile: null, partner: null, checkins: [], done: {}, nutrition:{} }; }
+  try { return { profile: null, partner: null, checkins: [], done: {}, nutrition:{}, workoutTitles:{}, workoutDone:{}, ...(JSON.parse(localStorage.getItem(STORE_KEY)) || {}) }; }
+  catch { return { profile: null, partner: null, checkins: [], done: {}, nutrition:{}, workoutTitles:{}, workoutDone:{} }; }
 }
-function saveData() { localStorage.setItem(STORE_KEY, JSON.stringify(data)); }
+function saveData() { try { localStorage.setItem(STORE_KEY, JSON.stringify(data)); return true; } catch (error) { console.warn("Dados não persistidos neste aparelho:", error?.message); return false; } }
 function escapeHTML(value = "") { return String(value).replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]); }
 function todayKey(date = new Date()) { return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")}`; }
 function dayName(date = new Date()) { return new Intl.DateTimeFormat("pt-BR", { weekday: "long" }).format(date); }
@@ -45,9 +45,9 @@ function weekDates() {
 }
 function planDays() {
   const p = data.profile || { days: 3, minutes: 60, cardioMinutes: 15, experience: "Iniciante", goal: goals[0] };
-  return window.TrainingPlanner.buildWeek(p,data.partner);
+  return window.TrainingPlanner.buildWeek(p,data.partner).map(day=>({...day,title:data.workoutTitles?.[day.index]||day.title}));
 }
-function sessionsThisWeek() { const dates = new Set(weekDates().map(todayKey)); return data.checkins.filter((item) => dates.has(item.date)).length; }
+function sessionsThisWeek() { const dates = new Set(weekDates().map(todayKey));const completed=new Set(data.checkins.filter(item=>dates.has(item.date)).map(item=>item.date));Object.keys(data.workoutDone||{}).filter(date=>dates.has(date)&&data.workoutDone[date]).forEach(date=>completed.add(date));return completed.size; }
 function nextWorkout() { const week=planDays();const today=(new Date().getDay()+6)%7;for(let offset=0;offset<7;offset++){const item=week[(today+offset)%7];if(!item.rest)return item;}return null; }
 function sharedDays(){const requested=data.partner?Math.min(Number(data.profile?.days)||3,Number(data.partner.days)||3):Number(data.profile?.days)||3;if(!data.partner)return requested;const own=data.profile?.daysOfWeek||defaultWeekdays[Number(data.profile?.days)]||defaultWeekdays[3];const other=data.partner.daysOfWeek||defaultWeekdays[Number(data.partner.days)]||defaultWeekdays[3];return Math.min(requested,own.filter(day=>other.includes(day)).length);}
 function sharedMinutes(){return data.partner?Math.min(Number(data.profile?.minutes)||60,Number(data.partner.minutes)||60):Number(data.profile?.minutes)||60;}
@@ -60,6 +60,17 @@ function streakCount() {
 function setActiveNav(route) {
   const key = route.split("/")[1] || "inicio";
   document.querySelectorAll("[data-nav]").forEach((item) => item.classList.toggle("active", item.dataset.nav === key || (key === "treino" && item.dataset.nav === "plano")));
+}
+function addWorkoutPlanControls(){
+  const dates=weekDates();
+  document.querySelectorAll(".day-card:not(.rest-card)").forEach(card=>{
+    if(card.querySelector(".plan-card-tools"))return;
+    const link=card.querySelector('a[href^="#/treino/"]');if(!link)return;
+    const dayIndex=Number(link.getAttribute("href").split("/").pop());const key=todayKey(dates[dayIndex]);
+    const tools=document.createElement("div");tools.className="plan-card-tools";
+    tools.innerHTML=`<label class="workout-done-toggle"><input type="checkbox" data-workout-done="${key}" ${data.workoutDone?.[key]?"checked":""}><span>${data.workoutDone?.[key]?"Treino concluído":"Marcar como feito"}</span></label><button class="small-button rename-workout" type="button" data-rename-workout="${dayIndex}">Renomear</button>`;
+    card.appendChild(tools);
+  });
 }
 function render() {
   if (!location.hash) location.hash = "#/inicio";
@@ -74,6 +85,7 @@ function render() {
   else if (route === "/chat") window.RitmoSocial?.renderChat(document.getElementById("app"));
   else if (route.startsWith("/treino/")) renderWorkout(Number(route.split("/")[2]));
   else renderHome();
+  if(route==="/plano") addWorkoutPlanControls();
   document.getElementById("app").focus({ preventScroll: true });
 }
 function profileForm(target="profile", edit=false) {
@@ -145,7 +157,7 @@ function movementGraphic(type="squat") {
     walk:`<g class="pose-one"><circle cx="31" cy="20" r="7"/><path d="M31 28v25m0-17-11 12m11-12 11 8m-11 9-12 15m12-15 13 10"/></g><g class="pose-two"><circle cx="83" cy="20" r="7"/><path d="M83 28v25m0-17-11 8m11-8 11 12m-11-12 12-15m-12 15-14 15"/></g>`
   };
   const scene=figures[type]||figures.squat;
-  return `<svg class="movement-svg" viewBox="0 0 120 90" role="img" aria-label="Ilustração esquemática em duas fases do movimento"><path class="floor" d="M8 78h104"/>${scene}<path class="motion-arrow" d="M53 34h14m-5-5 5 5-5 5"/></svg>`;
+  return `<svg class="movement-svg" viewBox="0 0 240 205" role="img" aria-label="Demonstração visual: primeiro a posição inicial, depois o movimento"><rect class="phase-panel" x="4" y="5" width="110" height="163" rx="15"/><rect class="phase-panel" x="126" y="5" width="110" height="163" rx="15"/><g transform="scale(2)"><path class="floor" d="M8 78h104"/>${scene}</g><path class="motion-arrow" d="M111 88h18m-6-6 6 6-6 6"/><text class="phase-label" x="59" y="190" text-anchor="middle">1 · INÍCIO</text><text class="phase-label" x="181" y="190" text-anchor="middle">2 · MOVIMENTO</text></svg>`;
 }
 function renderPlan() {
   if (!data.profile) { location.hash = "#/perfil"; return; }
@@ -177,8 +189,9 @@ function renderCheckin() {
     <div class="section-row"><h2>Seu histórico</h2></div>${renderHistory()}<div class="shared-history"></div>${groupCard()}`;
   appendSharedFeed(root);
 }
-async function appendSharedFeed(root){try{const items=await window.RitmoSocial?.listCheckins(20);if(!items?.length)return;const host=root.querySelector(".shared-history");if(!host)return;const state=window.RitmoSocial.state;const today=items.find(item=>item.local_date===todayKey()&&item.participant_ids?.includes(state.user?.id));if(today&&!currentCheckin()){const form=root.querySelector("#checkin-form");if(form)form.hidden=true;const note=document.createElement("div");note.className="checkin-success shared-today";note.innerHTML=`<span class="photo-pill">✓ CHECK-IN DO CASAL · ${escapeHTML(new Intl.DateTimeFormat("pt-BR",{hour:"2-digit",minute:"2-digit"}).format(new Date(today.occurred_at)))}</span><strong style="display:block;margin-top:10px">${escapeHTML(today.activity)}</strong><p>${escapeHTML(today.participantNames.join(" e "))} · ${escapeHTML(today.displayName)} registrou</p>${today.photoUrl?`<img src="${escapeHTML(today.photoUrl)}" alt="Foto privada do treino">`:""}`;form?.before(note);}
-    host.innerHTML=`<div class="section-row"><h2>Compartilhado no grupo</h2></div><div class="timeline">${items.map(item=>`<article class="history-item"><div class="history-date"><b>${new Date(`${item.local_date}T12:00:00`).getDate()}</b><small>${new Intl.DateTimeFormat("pt-BR",{month:"short"}).format(new Date(`${item.local_date}T12:00:00`)).replace(".","")}</small></div><div class="history-content">${item.photoUrl?`<img src="${escapeHTML(item.photoUrl)}" alt="Foto compartilhada do treino">`:""}<div><strong>${escapeHTML(item.activity)}</strong><small>${escapeHTML(item.participantNames.join(" e "))} · ${escapeHTML(item.displayName)} · ${new Intl.DateTimeFormat("pt-BR",{hour:"2-digit",minute:"2-digit"}).format(new Date(item.occurred_at))}</small></div></div></article>`).join("")}</div>`;
+function ensureCheckinDuration(root){const form=root.querySelector("#checkin-form");const photoField=form?.querySelector("#photo-picker")?.closest(".field");if(!form||!photoField||form.querySelector("#duration-minutes"))return;const field=document.createElement("div");field.className="field";field.innerHTML='<label for="duration-minutes">Duração do exercício (minutos) <span class="soft-label">(opcional, ajuda nas medalhas de cardio)</span></label><input id="duration-minutes" name="durationMinutes" type="number" min="1" max="600" inputmode="numeric" placeholder="Ex.: 30">';photoField.before(field);}
+async function appendSharedFeed(root){ensureCheckinDuration(root);try{const items=await window.RitmoSocial?.listCheckins(20);if(!items?.length)return;const host=root.querySelector(".shared-history");if(!host)return;const state=window.RitmoSocial.state;const today=items.find(item=>item.local_date===todayKey()&&item.participant_ids?.includes(state.user?.id));if(today&&!currentCheckin()){const form=root.querySelector("#checkin-form");if(form)form.hidden=true;const note=document.createElement("div");note.className="checkin-success shared-today";note.innerHTML=`<span class="photo-pill">✓ CHECK-IN DO CASAL · ${escapeHTML(new Intl.DateTimeFormat("pt-BR",{hour:"2-digit",minute:"2-digit"}).format(new Date(today.occurred_at)))}</span><strong style="display:block;margin-top:10px">${escapeHTML(today.activity)}</strong><p>${escapeHTML(today.participantNames.join(" e "))} · ${escapeHTML(today.displayName)} registrou${today.durationMinutes?` · ${today.durationMinutes} min`:""}</p>${today.photoUrl?`<img src="${escapeHTML(today.photoUrl)}" alt="Foto privada do treino">`:""}`;form?.before(note);}
+  host.innerHTML=`<div class="section-row"><h2>Compartilhado no grupo</h2></div><div class="timeline">${items.map(item=>`<article class="history-item"><div class="history-date"><b>${new Date(`${item.local_date}T12:00:00`).getDate()}</b><small>${new Intl.DateTimeFormat("pt-BR",{month:"short"}).format(new Date(`${item.local_date}T12:00:00`)).replace(".","")}</small></div><div class="history-content">${item.photoUrl?`<img src="${escapeHTML(item.photoUrl)}" alt="Foto compartilhada do treino">`:""}<div><strong>${escapeHTML(item.activity)}</strong><small>${escapeHTML(item.participantNames.join(" e "))} · ${escapeHTML(item.displayName)} · ${new Intl.DateTimeFormat("pt-BR",{hour:"2-digit",minute:"2-digit"}).format(new Date(item.occurred_at))}${item.durationMinutes?` · ${item.durationMinutes} min`:""}</small></div></div></article>`).join("")}</div>`;
   }catch(error){console.warn("Não foi possível carregar o feed compartilhado",error);}}
 function renderHistory() {
   const history = [...data.checkins].sort((a,b)=>b.timestamp-a.timestamp).slice(0,8);
@@ -191,8 +204,21 @@ function renderProgress() {
   const bars = weekDates().map((date)=>{ const count=data.checkins.filter((item)=>item.date===todayKey(date)).length; const h=count?Math.max(18,Math.round(count/max*66)):6; return `<div class="bar-day ${todayKey(date)===todayKey()?"today":""}"><i class="${count?"on":""}" style="height:${h}px"></i>${new Intl.DateTimeFormat("pt-BR",{weekday:"narrow"}).format(date)}</div>`; }).join("");
   document.getElementById("app").innerHTML = `<div class="eyebrow">CADA TREINO CONTA</div><h1 class="page-title">Seu progresso.</h1><p class="subhead">Acompanhe a frequência e celebre o que você já fez.</p><div class="stats-grid"><div class="stat-card"><div class="stat-value">${thisWeek}<span style="font-size:15px"> / ${data.profile.days}</span></div><div class="stat-label">check-ins nesta semana</div></div><div class="stat-card streak-card"><div><div class="stat-value">${streak}</div><div class="stat-label">dias seguidos</div></div><span class="streak-icon">✳</span></div></div><div class="section-row"><h2>Semana atual</h2><span class="soft-label">check-ins por dia</span></div><div class="progress-bars">${bars}</div><div class="section-row"><h2>Seu histórico</h2><a class="text-link" href="#/checkin">Ver check-ins →</a></div>${renderHistory()}<div class="notice">A frequência ajuda a visualizar consistência, mas não mede sozinha os resultados físicos. Sono, alimentação, recuperação e características individuais também contam.</div>`;
   data.checkins.slice(0,8).forEach((item)=>showPhoto(item.id,`photo-${item.id}`));
+  renderMedals();
 }
-function renderNutrition(){
+function renderMedals(){
+  const total=new Set(data.checkins.map(item=>item.date)).size;const streak=streakCount();
+  const cardio=data.checkins.filter(item=>/corrida|caminhada|cardio|bicicleta/i.test(item.activity));const cardioCount=cardio.length;const bestCardio=Math.max(0,...cardio.map(item=>Number(item.durationMinutes)||0));
+  const definitions=[
+    ["Primeiro passo","Seu primeiro treino registrado",total,1,"✦"],["Trinca","3 treinos registrados",total,3,"✳"],["Ritmo constante","10 treinos registrados",total,10,"◒"],["20 presenças","20 dias com treino",total,20,"🏅"],["Meio século","50 treinos registrados",total,50,"🏆"],
+    ["Três dias","3 dias seguidos registrando treino",streak,3,"🔥"],["Uma semana","7 dias seguidos registrando treino",streak,7,"⚡"],["Quinzena","15 dias seguidos registrando treino",streak,15,"🌟"],["Mês em movimento","30 dias seguidos registrando treino",streak,30,"💎"],
+    ["Primeiro cardio","Uma corrida, caminhada ou pedal",cardioCount,1,"🚶"],["Cardio x5","5 sessões de cardio",cardioCount,5,"🚴"],["15 minutos","15 min numa sessão de cardio",bestCardio,15,"⏱️"],["Meia hora","30 min numa sessão de cardio",bestCardio,30,"⌚"],["45 minutos","45 min numa sessão de cardio",bestCardio,45,"🥇"],["Uma hora","60 min numa sessão de cardio",bestCardio,60,"🏁"],
+    ["Semana completa","Cumpriu a meta de check-ins da semana",sessionsThisWeek(),Math.max(1,sharedDays()),"📅"]
+  ];
+  const host=document.createElement("section");host.className="medals-section";host.innerHTML=`<div class="section-row"><div><div class="eyebrow">CONQUISTAS</div><h2>Medalhas do seu ritmo</h2></div><span class="group-tag">${definitions.filter(item=>item[2]>=item[3]).length}/${definitions.length} conquistadas</span></div><div class="medal-grid">${definitions.map(([name,description,value,target,icon])=>{const earned=value>=target;const progress=Math.min(100,Math.round(value/target*100));return `<article class="medal-card ${earned?"earned":"locked"}"><span class="medal-icon">${icon}</span><strong>${name}</strong><small>${earned?"Conquistada":description}</small><div class="medal-track"><i style="width:${progress}%"></i></div></article>`;}).join("")}</div><p class="form-note">As medalhas acompanham os registros salvos neste aparelho. Dias de descanso continuam importantes; não treine com dor só para manter uma sequência.</p>`;
+  document.getElementById("app").appendChild(host);
+}
+function renderNutritionOld(){
   if(!data.profile){location.hash="#/perfil";return;}const saved=data.nutrition?.[todayKey()]||{};const p=data.profile;
   document.getElementById("app").innerHTML=`<a class="back-link" href="#/inicio">← Voltar ao início</a><div class="eyebrow">HÁBITOS, NÃO DIETA MILAGROSA</div><h1 class="page-title">Alimentação que cabe na vida real.</h1><p class="subhead">Foco escolhido: ${escapeHTML(p.nutritionGoal||"Quero hábitos gerais")}. O app não vai inventar calorias ou prometer um corpo até uma data.</p><div class="nutrition-card"><span class="group-tag">GUIA GERAL</span><h2>Comece pela base.</h2><p>O Guia Alimentar brasileiro recomenda que alimentos in natura ou minimamente processados formem a base da alimentação, com variedade e preparações que façam sentido para sua rotina.</p><div class="meal-examples"><span>Arroz e feijão</span><span>Ovos, peixe ou carnes</span><span>Frutas e verduras</span><span>Água ao longo do dia</span></div><a class="text-link" href="https://www.gov.br/saude/pt-br/assuntos/saude-brasil/publicacoes-para-promocao-a-saude/guia_alimentar_populacao_brasileira_2ed.pdf/view" target="_blank" rel="noreferrer">Guia Alimentar do Ministério da Saúde ↗</a></div><div class="section-row"><h2>Hábitos de hoje</h2><span class="soft-label">salvos neste aparelho</span></div><form id="nutrition-form" class="card form-card"><label class="habit-row"><input type="checkbox" name="plants" ${saved.plants?"checked":""}><span>Incluí frutas, verduras ou legumes</span></label><label class="habit-row"><input type="checkbox" name="homeMeal" ${saved.homeMeal?"checked":""}><span>Fiz pelo menos uma refeição com comida de verdade</span></label><label class="habit-row"><input type="checkbox" name="water" ${saved.water?"checked":""}><span>Deixei água por perto durante o dia</span></label><div class="field" style="margin-top:16px"><label for="meal-note">Anotação opcional</label><textarea id="meal-note" name="note" placeholder="O que ajudou ou atrapalhou sua rotina hoje?">${escapeHTML(saved.note||"")}</textarea></div><button class="button button-dark button-block">Salvar hábitos de hoje</button></form><div class="nutrition-card nutrition-warning"><h2>Personalização responsável</h2><p>Para sugerir metas individuais de energia, proteína ou perda de peso, faltam dados e contexto clínico; um IMC e uma data-alvo não bastam. Se houver doença, alergia ou histórico alimentar delicado, converse com nutricionista. A gente pode ampliar esta área para organizar preferências e preparar perguntas para a consulta.</p><p>${p.foodNotes?`Preferências anotadas: ${escapeHTML(p.foodNotes)}`:"Ainda não há restrições alimentares registradas."}</p></div>`;
 }
@@ -218,11 +244,12 @@ function moveWizard(form,step){const max=form.querySelectorAll(".profile-step").
 function syncWeekdayPicker(form,count){const controls=[...form.querySelectorAll('input[name="weekdays"]')];let selected=controls.filter(control=>control.checked).map(control=>Number(control.value));if(selected.length>count)selected=selected.slice(0,count);for(const day of (defaultWeekdays[count]||defaultWeekdays[3]))if(selected.length<count&&!selected.includes(day))selected.push(day);controls.forEach(control=>{control.checked=selected.includes(Number(control.value));});}
 document.addEventListener("click",async(event)=>{
   const routeButton=event.target.closest("[data-route]");if(routeButton){location.hash=`#${routeButton.dataset.route}`;return;}
+  const renameButton=event.target.closest("[data-rename-workout]");if(renameButton){const dayIndex=Number(renameButton.dataset.renameWorkout);const current=planDays()[dayIndex]?.title||"Treino";const value=window.prompt("Como você quer chamar este treino? Deixe em branco para usar o nome original.",current);if(value===null)return;data.workoutTitles=data.workoutTitles||{};if(value.trim())data.workoutTitles[dayIndex]=value.trim().slice(0,40);else delete data.workoutTitles[dayIndex];saveData();const synced=await window.RitmoSocial?.saveWorkoutTitles?.(data.workoutTitles);notify(synced?"Nome salvo e compartilhado com sua esposa":"Nome salvo neste aparelho");render();return;}
   if(event.target.id==="edit-profile"){const section=document.getElementById("profile-edit");section.style.display=section.style.display==="none"?"block":"none";return;}
   const wizardButton=event.target.closest(".wizard-next,.wizard-back");if(wizardButton){const form=wizardButton.closest("form");const active=Number(form.querySelector(".profile-step.active")?.dataset.step||0);if(wizardButton.classList.contains("wizard-next")){const fields=[...form.querySelectorAll(`.profile-step[data-step="${active}"] [required]`)];if(fields.some(field=>!field.reportValidity()))return;}moveWizard(form,active+(wizardButton.classList.contains("wizard-next")?1:-1));return;}
   const exercise=event.target.closest("[data-exercise]");if(exercise){const route=location.hash.replace(/^#/,"");const index=Number(route.split("/")[2]);const key=`${todayKey()}-${index}-${exercise.dataset.exercise}`;data.done[key]=exercise.checked;saveData();exercise.closest(".exercise").classList.toggle("done",exercise.checked);}
 });
-document.addEventListener("change",(event)=>{if(event.target.id==="photo"){pickedPhoto=event.target.files?.[0]||null;const picker=document.getElementById("photo-picker");const preview=document.getElementById("photo-preview");if(pickedPhoto){preview.src=URL.createObjectURL(pickedPhoto);picker.classList.add("has-photo");}else{picker.classList.remove("has-photo");}}if(event.target.id==="days")syncWeekdayPicker(event.target.form,Number(event.target.value));});
+document.addEventListener("change",(event)=>{if(event.target.id==="photo"){pickedPhoto=event.target.files?.[0]||null;const picker=document.getElementById("photo-picker");const preview=document.getElementById("photo-preview");if(pickedPhoto){preview.src=URL.createObjectURL(pickedPhoto);picker.classList.add("has-photo");}else{picker.classList.remove("has-photo");}}if(event.target.id==="days")syncWeekdayPicker(event.target.form,Number(event.target.value));if(event.target.matches("[data-workout-done]")){const key=event.target.dataset.workoutDone;data.workoutDone=data.workoutDone||{};if(event.target.checked)data.workoutDone[key]=true;else delete data.workoutDone[key];saveData();const label=event.target.closest("label");label?.querySelector("span")?.replaceChildren(document.createTextNode(event.target.checked?"Treino concluído":"Marcar como feito"));}});
 document.addEventListener("submit",async(event)=>{
   if(event.target.id==="nutrition-form"){
     event.preventDefault();const form=new FormData(event.target);data.nutrition[todayKey()]={plants:form.has("plants"),homeMeal:form.has("homeMeal"),water:form.has("water"),note:String(form.get("note")||"").trim()};saveData();notify("Hábitos de hoje salvos neste aparelho");
@@ -232,13 +259,42 @@ document.addEventListener("submit",async(event)=>{
   }
   if(event.target.id==="checkin-form"){
     event.preventDefault();if(currentCheckin()){notify("Você já fez check-in hoje");render();return;}const form=new FormData(event.target);const file=form.get("photo");if(!file||!file.size){notify("Escolha uma foto para continuar");return;}const button=event.target.querySelector("button[type=submit]");button.disabled=true;button.textContent="Salvando check-in…";
-    const now=new Date();const item={id:crypto.randomUUID?crypto.randomUUID():`${now.getTime()}-${Math.random().toString(16).slice(2)}`,date:todayKey(now),timestamp:now.getTime(),time:new Intl.DateTimeFormat("pt-BR",{hour:"2-digit",minute:"2-digit"}).format(now),activity:String(form.get("activity")),caption:String(form.get("caption")||"").trim()};
+    const now=new Date();const item={id:crypto.randomUUID?crypto.randomUUID():`${now.getTime()}-${Math.random().toString(16).slice(2)}`,date:todayKey(now),timestamp:now.getTime(),time:new Intl.DateTimeFormat("pt-BR",{hour:"2-digit",minute:"2-digit"}).format(now),activity:String(form.get("activity")),durationMinutes:Number(form.get("durationMinutes"))||0,caption:String(form.get("caption")||"").trim()};
     const participants=[...event.target.querySelectorAll('input[name="participants"]:checked')].map(input=>input.value);
-    try{const photo=await compressPhoto(file);let synced=false;let syncFailed=false;try{if(await window.RitmoSocial?.hasCheckinToday())throw new Error("Você ou sua esposa já registrou este check-in hoje.");synced=!!(await window.RitmoSocial?.publishCheckin({activity:item.activity,caption:item.caption,photo,participants,date:item.date}));}catch(syncError){if(syncError.message?.includes("já registrou"))throw syncError;syncFailed=!!window.RitmoSocial?.state?.group;console.warn("Check-in mantido localmente; sincronização pendente",syncError);}await savePhoto(item.id,photo);data.checkins.push(item);saveData();pickedPhoto=null;notify(synced?"Check-in compartilhado com sua esposa ✳":syncFailed?"Check-in salvo aqui, mas não foi compartilhado":"Check-in salvo neste aparelho");location.hash="#/checkin";}catch(error){button.disabled=false;button.textContent="Tentar salvar novamente";notify(error.message||"Não foi possível guardar a foto. Verifique o espaço no aparelho.");}
+    try{const photo=await compressPhoto(file);let synced=false;let syncFailed=false;try{if(await window.RitmoSocial?.hasCheckinToday())throw new Error("Você ou sua esposa já registrou este check-in hoje.");synced=!!(await window.RitmoSocial?.publishCheckin({activity:item.activity,caption:item.caption,photo,participants,date:item.date,durationMinutes:item.durationMinutes}));}catch(syncError){if(syncError.message?.includes("já registrou"))throw syncError;syncFailed=!!window.RitmoSocial?.state?.group;console.warn("Check-in mantido localmente; sincronização pendente",syncError);}await savePhoto(item.id,photo);data.checkins.push(item);saveData();pickedPhoto=null;notify(synced?"Check-in compartilhado com sua esposa ✳":syncFailed?"Check-in salvo aqui, mas não foi compartilhado":"Check-in salvo neste aparelho");location.hash="#/checkin";}catch(error){button.disabled=false;button.textContent="Tentar salvar novamente";notify(error.message||"Não foi possível guardar a foto. Verifique o espaço no aparelho.");}
   }
 });
+function renderNutrition(){
+  if(!data.profile){location.hash='#/perfil';return;}
+  const p=data.profile;const saved=data.nutrition?.[todayKey()]||{};const focus=p.nutritionGoal||'Quero hábitos gerais';
+  const trainingToday=planDays().find(day=>day.index===(new Date().getDay()+6)%7&&!day.rest);
+  const focusText=focus==='Quero perder gordura'?
+    'Organize refeições completas e regulares, priorizando comida de verdade e vegetais. O app não calcula déficit calórico.':
+    focus==='Quero ganhar massa'?
+    'Mantenha refeições completas e inclua uma fonte de proteína e energia ao longo do dia. O app não prescreve calorias ou suplementos.':
+    focus==='Quero manter meu peso'?
+    'Busque variedade e uma rotina sustentável de refeições, ajustando escolhas à fome, ao treino e à sua rotina.':
+    'Use alimentos variados e minimamente processados como base, com refeições que caibam na sua rotina.';
+  const snack=focus==='Quero ganhar massa'?'Pão com queijo ou pasta de amendoim, ou fruta com iogurte.':'Fruta com iogurte, ou pão com queijo; escolha conforme sua fome.';
+  const meals=[
+    ['Café da manhã','Aveia com fruta e iogurte; ou pão com ovos e uma fruta.'],
+    ['Almoço','Arroz e feijão, uma fonte de proteína (ovo, peixe, frango ou opção vegetal) e verduras/legumes.'],
+    ['Lanche / perto do treino',snack],
+    ['Jantar','Repita a estrutura do almoço ou escolha batata/mandioca, feijão, proteína e vegetais.']
+  ];
+  const done=[saved.plants,saved.homeMeal,saved.water].filter(Boolean).length;
+  document.getElementById('app').innerHTML=`<div class='eyebrow'>NUTRIÇÃO + ROTINA DE TREINO</div><h1 class='page-title'>Comida que acompanha seu plano.</h1><p class='subhead'>Foco: ${escapeHTML(focus)} · sugestões gerais baseadas nos seus dados e objetivo, sem dieta rígida.</p>
+    <div class='nutrition-hero'><div><span class='group-tag'>HOJE · ${trainingToday?'DIA DE TREINO':'DIA DE RECUPERAÇÃO'}</span><h2>${trainingToday?'Prepare energia para treinar.':'Mantenha uma rotina simples.'}</h2><p>${escapeHTML(focusText)}</p></div><div class='nutrition-bmi'><strong>${bmi().toFixed(1)}</strong><span>IMC de referência</span></div></div>
+    <div class='section-row'><h2>Um exemplo flexível para hoje</h2><span class='soft-label'>troque conforme suas preferências</span></div>
+    <div class='meal-plan-grid'>${meals.map(([title,description],index)=>`<article class='meal-slot'><span class='meal-index'>0${index+1}</span><div><strong>${escapeHTML(title)}</strong><p>${escapeHTML(description)}</p></div></article>`).join('')}</div>
+    <div class='nutrition-card nutrition-training'><span class='group-tag'>EM TORNO DO TREINO</span><h2>${trainingToday?'Antes e depois, sem complicar.':'Quando for treinar'}</h2><p>Se sentir fome antes do treino, escolha um lanche que você tolere bem. Depois, faça uma refeição habitual com carboidrato e alguma fonte de proteína. Água ao longo do dia costuma bastar para treinos comuns; calor e suor mudam a necessidade.</p></div>
+    <div class='section-row'><h2>Pequenos cuidados de hoje</h2><span class='soft-label'>${done}/3 marcados</span></div>
+    <form id='nutrition-form' class='card form-card nutrition-checklist'><label class='habit-row'><input type='checkbox' name='plants' ${saved.plants?'checked':''}><span>Incluí fruta, verdura ou legume</span></label><label class='habit-row'><input type='checkbox' name='homeMeal' ${saved.homeMeal?'checked':''}><span>Fiz uma refeição com comida de verdade e uma fonte de proteína</span></label><label class='habit-row'><input type='checkbox' name='water' ${saved.water?'checked':''}><span>Deixei água por perto durante o dia</span></label><div class='field' style='margin-top:14px'><label for='meal-note'>Anotação de alimentação</label><textarea id='meal-note' name='note' placeholder='O que você comeu ou quer ajustar?'>${escapeHTML(saved.note||'')}</textarea></div><button class='button button-dark button-block'>Salvar meu dia alimentar</button></form>
+    <div class='nutrition-card'><span class='group-tag'>PREFERÊNCIAS DO PERFIL</span><p>${p.foodNotes?escapeHTML(p.foodNotes):'Você ainda não registrou preferências ou restrições. Dá para adicionar em Perfil.'}</p><a class='text-link' href='#/perfil'>Editar preferências →</a></div>
+    <div class='notice'>Este é um exemplo educativo, não uma dieta calculada. IMC, peso e altura não bastam para definir calorias, porções terapêuticas ou um plano para alergias/doenças. Para necessidades clínicas ou metas nutricionais precisas, procure nutricionista. Base: <a href='https://www.gov.br/saude/pt-br/assuntos/saude-brasil/publicacoes-para-promocao-a-saude/guia_alimentar_populacao_brasileira_2ed.pdf/view' target='_blank' rel='noreferrer'>Guia Alimentar do Ministério da Saúde ↗</a></div>`;
+}
 window.addEventListener("hashchange",render);
-window.addEventListener("ritmo:social-ready",(event)=>{const state=event.detail;if(state?.user&&state?.group){const own=state.profiles.find(item=>item.user_id===state.user.id);const other=state.profiles.find(item=>item.user_id!==state.user.id);if(own)data.profile=window.RitmoSocial.appProfile(own);else if(data.profile)window.RitmoSocial.saveProfile(data.profile);data.partner=window.RitmoSocial.appProfile(other);saveData();if(location.hash!=="#/chat")render();}});
+window.addEventListener("ritmo:social-ready",(event)=>{const state=event.detail;if(state?.user&&state?.group){const own=state.profiles.find(item=>item.user_id===state.user.id);const other=state.profiles.find(item=>item.user_id!==state.user.id);if(own)data.profile=window.RitmoSocial.appProfile(own);else if(data.profile)window.RitmoSocial.saveProfile(data.profile);data.partner=window.RitmoSocial.appProfile(other);data.workoutTitles={...(state.group.workout_titles||{}),...(data.workoutTitles||{})};saveData();if(location.hash!=="#/chat")render();}});
 if("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("./sw.js").catch(()=>{});
 render();
 window.RitmoSocial?.bootstrap();
@@ -248,3 +304,4 @@ function refreshAtLocalMidnight() {
   setTimeout(() => { render(); refreshAtLocalMidnight(); }, next.getTime() - now.getTime());
 }
 refreshAtLocalMidnight();
+
