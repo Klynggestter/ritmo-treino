@@ -7,10 +7,15 @@ create table if not exists public.ritmo_groups (
   name text not null default 'Nosso treino',
   workout_titles jsonb not null default '{}'::jsonb,
   invite_code text not null unique default encode(gen_random_bytes(16), 'hex'),
+  invite_status text not null default 'pending' check (invite_status in ('pending','accepted','expired','cancelled')),
+  invite_expires_at timestamptz not null default (now() + interval '7 days'),
   created_by uuid not null references auth.users(id) on delete cascade,
   created_at timestamptz not null default now()
 );
 alter table public.ritmo_groups add column if not exists workout_titles jsonb not null default '{}'::jsonb;
+alter table public.ritmo_groups add column if not exists invite_status text not null default 'pending';
+alter table public.ritmo_groups add column if not exists invite_expires_at timestamptz not null default (now() + interval '7 days');
+update public.ritmo_groups set invite_code=upper(substr(encode(gen_random_bytes(6),'hex'),1,8)) where invite_status='pending' and char_length(invite_code)>10;
 
 create table if not exists public.ritmo_members (
   group_id uuid not null references public.ritmo_groups(id) on delete cascade,
@@ -18,6 +23,7 @@ create table if not exists public.ritmo_members (
   joined_at timestamptz not null default now(),
   primary key (group_id, user_id)
 );
+update public.ritmo_groups g set invite_status='accepted' where invite_status='pending' and (select count(*) from public.ritmo_members m where m.group_id=g.id)>=2;
 
 create table if not exists public.ritmo_profiles (
   user_id uuid primary key references auth.users(id) on delete cascade,
@@ -38,8 +44,10 @@ create table if not exists public.ritmo_profiles (
   target_date date,
   nutrition_goal text,
   food_notes text,
+  training_settings jsonb not null default '{}'::jsonb,
   updated_at timestamptz not null default now()
 );
+alter table public.ritmo_profiles add column if not exists training_settings jsonb not null default '{}'::jsonb;
 
 create table if not exists public.ritmo_checkins (
   id uuid primary key default gen_random_uuid(),
@@ -57,6 +65,23 @@ create table if not exists public.ritmo_checkins (
 );
 alter table public.ritmo_checkins add column if not exists duration_minutes smallint check (duration_minutes between 1 and 600);
 create index if not exists ritmo_checkins_group_time on public.ritmo_checkins(group_id, occurred_at desc);
+
+create table if not exists public.ritmo_training_logs (
+  id bigint generated always as identity primary key,
+  group_id uuid not null references public.ritmo_groups(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  log_key text not null,
+  session_date date not null,
+  day_index smallint not null check (day_index between 0 and 6),
+  exercise_key text not null,
+  exercise_name text not null,
+  sets smallint not null check (sets between 1 and 10),
+  reps smallint not null check (reps between 1 and 100),
+  load_kg numeric(7,2) not null default 0 check (load_kg between 0 and 1000),
+  created_at timestamptz not null default now(),
+  unique(user_id,log_key)
+);
+create index if not exists ritmo_training_logs_member_date on public.ritmo_training_logs(user_id,session_date desc);
 
 create table if not exists public.ritmo_messages (
   id bigint generated always as identity primary key,
@@ -81,11 +106,17 @@ create or replace function public.ritmo_create_group(group_name text default 'No
 returns table(group_id uuid, invite_code text)
 language plpgsql security definer set search_path = public, auth
 as $$
-declare new_group public.ritmo_groups;
+declare new_group public.ritmo_groups; short_code text; alphabet constant text := 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 begin
   if auth.uid() is null then raise exception 'Entre na sua conta primeiro.'; end if;
   if exists (select 1 from public.ritmo_members where user_id = auth.uid()) then raise exception 'Esta conta já está em um grupo.'; end if;
-  insert into public.ritmo_groups(name, created_by) values (left(coalesce(nullif(trim(group_name),''),'Nosso treino'), 50), auth.uid()) returning * into new_group;
+  loop
+    short_code := '';
+    for i in 1..8 loop short_code := short_code || substr(alphabet,1+(get_byte(gen_random_bytes(1),0)%length(alphabet)),1); end loop;
+    exit when not exists(select 1 from public.ritmo_groups where ritmo_groups.invite_code=short_code);
+  end loop;
+  insert into public.ritmo_groups(name, created_by, invite_code, invite_status, invite_expires_at)
+  values (left(coalesce(nullif(trim(group_name),''),'Nosso treino'), 50), auth.uid(), short_code, 'pending', now()+interval '7 days') returning * into new_group;
   insert into public.ritmo_members(group_id,user_id) values (new_group.id,auth.uid());
   return query select new_group.id,new_group.invite_code;
 end $$;
@@ -97,11 +128,45 @@ declare target public.ritmo_groups;
 begin
   if auth.uid() is null then raise exception 'Entre na sua conta primeiro.'; end if;
   if exists (select 1 from public.ritmo_members where user_id = auth.uid()) then raise exception 'Esta conta já está em um grupo.'; end if;
-  select * into target from public.ritmo_groups g where g.invite_code = trim(code) for update;
+  select * into target from public.ritmo_groups g where upper(g.invite_code) = upper(trim(code)) for update;
   if target.id is null then raise exception 'Código de convite inválido.'; end if;
+  if target.invite_status='cancelled' then raise exception 'Este convite foi cancelado.'; end if;
+  if target.invite_status='accepted' then raise exception 'Este convite já foi aceito.'; end if;
+  if target.invite_expires_at < now() then update public.ritmo_groups set invite_status='expired' where id=target.id; raise exception 'Este convite expirou. Peça um novo convite.'; end if;
+  if target.invite_status='expired' then raise exception 'Este convite expirou. Peça um novo convite.'; end if;
   if (select count(*) from public.ritmo_members where group_id=target.id) >= 2 then raise exception 'Este grupo já tem duas pessoas.'; end if;
   insert into public.ritmo_members(group_id,user_id) values(target.id,auth.uid());
+  update public.ritmo_groups set invite_status='accepted' where id=target.id;
   return target.id;
+end $$;
+
+create or replace function public.ritmo_cancel_invite(target_group uuid)
+returns void language plpgsql security definer set search_path = public, auth
+as $$
+begin
+  if auth.uid() is null then raise exception 'Entre na sua conta primeiro.'; end if;
+  update public.ritmo_groups set invite_status='cancelled'
+  where id=target_group and created_by=auth.uid() and invite_status='pending';
+  if not found then raise exception 'Este convite não está mais aguardando aceitação.'; end if;
+end $$;
+
+create or replace function public.ritmo_refresh_invite(target_group uuid)
+returns text language plpgsql security definer set search_path = public, auth
+as $$
+declare short_code text; alphabet constant text := 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; current_status text;
+begin
+  if auth.uid() is null then raise exception 'Entre na sua conta primeiro.'; end if;
+  select invite_status into current_status from public.ritmo_groups where id=target_group and created_by=auth.uid() for update;
+  if current_status is null then raise exception 'Somente quem criou o grupo pode renovar o convite.'; end if;
+  if current_status='accepted' then raise exception 'O convite já foi aceito.'; end if;
+  if (select count(*) from public.ritmo_members where group_id=target_group)>=2 then raise exception 'O grupo já está completo.'; end if;
+  loop
+    short_code := '';
+    for i in 1..8 loop short_code := short_code || substr(alphabet,1+(get_byte(gen_random_bytes(1),0)%length(alphabet)),1); end loop;
+    exit when not exists(select 1 from public.ritmo_groups where invite_code=short_code);
+  end loop;
+  update public.ritmo_groups set invite_code=short_code,invite_status='pending',invite_expires_at=now()+interval '7 days' where id=target_group;
+  return short_code;
 end $$;
 
 alter table public.ritmo_groups enable row level security;
@@ -109,6 +174,7 @@ alter table public.ritmo_members enable row level security;
 alter table public.ritmo_profiles enable row level security;
 alter table public.ritmo_checkins enable row level security;
 alter table public.ritmo_messages enable row level security;
+alter table public.ritmo_training_logs enable row level security;
 
 drop policy if exists ritmo_group_read on public.ritmo_groups;
 create policy ritmo_group_read on public.ritmo_groups for select to authenticated using (public.ritmo_is_member(id));
@@ -137,6 +203,14 @@ drop policy if exists ritmo_messages_read on public.ritmo_messages;
 create policy ritmo_messages_read on public.ritmo_messages for select to authenticated using (public.ritmo_is_member(group_id));
 drop policy if exists ritmo_messages_insert on public.ritmo_messages;
 create policy ritmo_messages_insert on public.ritmo_messages for insert to authenticated with check (sender_id=auth.uid() and public.ritmo_is_member(group_id));
+drop policy if exists ritmo_training_logs_read on public.ritmo_training_logs;
+create policy ritmo_training_logs_read on public.ritmo_training_logs for select to authenticated using (public.ritmo_is_member(group_id));
+drop policy if exists ritmo_training_logs_insert on public.ritmo_training_logs;
+create policy ritmo_training_logs_insert on public.ritmo_training_logs for insert to authenticated with check (user_id=auth.uid() and public.ritmo_is_member(group_id));
+drop policy if exists ritmo_training_logs_update on public.ritmo_training_logs;
+create policy ritmo_training_logs_update on public.ritmo_training_logs for update to authenticated using (user_id=auth.uid() and public.ritmo_is_member(group_id)) with check (user_id=auth.uid() and public.ritmo_is_member(group_id));
+drop policy if exists ritmo_training_logs_delete on public.ritmo_training_logs;
+create policy ritmo_training_logs_delete on public.ritmo_training_logs for delete to authenticated using (user_id=auth.uid() and public.ritmo_is_member(group_id));
 
 insert into storage.buckets(id,name,public,file_size_limit,allowed_mime_types)
 values ('ritmo-private','ritmo-private',false,5242880,array['image/jpeg','image/png','image/webp','image/heic'])
@@ -161,15 +235,20 @@ create policy ritmo_photo_delete on storage.objects for delete to authenticated 
 revoke all on function public.ritmo_is_member(uuid,uuid) from public;
 revoke all on function public.ritmo_create_group(text) from public;
 revoke all on function public.ritmo_join_group(text) from public;
+revoke all on function public.ritmo_cancel_invite(uuid) from public;
+revoke all on function public.ritmo_refresh_invite(uuid) from public;
 grant execute on function public.ritmo_is_member(uuid,uuid) to authenticated;
 grant execute on function public.ritmo_all_participants_are_members(uuid,uuid[]) to authenticated;
 grant execute on function public.ritmo_create_group(text) to authenticated;
 grant execute on function public.ritmo_join_group(text) to authenticated;
-grant select on public.ritmo_groups,public.ritmo_members,public.ritmo_profiles,public.ritmo_checkins,public.ritmo_messages to authenticated;
+grant execute on function public.ritmo_cancel_invite(uuid) to authenticated;
+grant execute on function public.ritmo_refresh_invite(uuid) to authenticated;
+grant select on public.ritmo_groups,public.ritmo_members,public.ritmo_profiles,public.ritmo_checkins,public.ritmo_messages,public.ritmo_training_logs to authenticated;
 grant update(workout_titles) on public.ritmo_groups to authenticated;
 grant insert,update on public.ritmo_profiles to authenticated;
 grant insert,delete on public.ritmo_checkins to authenticated;
 grant insert on public.ritmo_messages to authenticated;
+grant insert,update,delete on public.ritmo_training_logs to authenticated;
 
 do $$ begin
   if not exists (select 1 from pg_publication_tables where pubname='supabase_realtime' and schemaname='public' and tablename='ritmo_messages') then
