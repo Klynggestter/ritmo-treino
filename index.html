@@ -11,31 +11,48 @@
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="assets/icon.svg">
-    <link rel="stylesheet" href="styles.css?v=7">
+    <link rel="stylesheet" href="styles.css?v=8">
+    <link rel="stylesheet" href="redesign.css?v=8">
+    <link rel="stylesheet" href="library.css?v=2">
     <title>Ritmo — treino no seu ritmo</title>
   </head>
   <body>
     <div class="app-shell">
-      <header class="topbar">
-        <a class="brand" href="#/inicio" aria-label="Ritmo, início">
-          <span class="brand-mark" aria-hidden="true">R</span><span class="brand-word">RITMO</span>
-        </a>
-        <button class="avatar-button" type="button" data-route="/perfil" aria-label="Abrir perfil"><span id="avatar-initial">R</span></button>
-      </header>
-      <main id="app" tabindex="-1" aria-live="polite"></main>
-      <nav class="bottom-nav" aria-label="Navegação principal">
-        <a href="#/inicio" data-nav="inicio"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m3.5 10 8.5-7 8.5 7v10.5h-6v-7h-5v7h-6z"/></svg></span><span>Início</span></a>
-        <a href="#/plano" data-nav="plano"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 8v8m3-10v12m10-12v12m3-10v8M7 12h10"/></svg></span><span>Treino</span></a>
-        <a href="#/checkin" data-nav="checkin"><span class="nav-icon nav-check" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span><span>Check-in</span></a>
-        <a href="#/nutricao" data-nav="nutricao"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 21c5.5-3.2 8-7.3 8-11.2C20 6.6 17.8 4 14.8 4c-1.2 0-2.2.5-2.8 1.5C11.4 4.5 10.4 4 9.2 4 6.2 4 4 6.6 4 9.8 4 13.7 6.5 17.8 12 21Z"/><path d="M8 15c1.2-2.2 3.2-4 6-5"/></svg></span><span>Nutrição</span></a>
-        <a href="#/chat" data-nav="chat"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 11.4a7.4 7.4 0 0 1-7.8 7.3 8.2 8.2 0 0 1-3.2-.6L4 20l1.4-4a7 7 0 0 1-.8-3.3 7.4 7.4 0 0 1 7.6-7.2 7.4 7.4 0 0 1 7.8 5.9Z"/></svg></span><span>Mensagens</span></a>
+      <aside class="sidebar" id="app-sidebar" aria-label="Navegação do Ritmo">
+        <div class="sidebar-top"><a class="brand" href="#/inicio" aria-label="Ritmo, início"><span class="brand-mark">R</span><span class="brand-word">RITMO</span></a><button class="sidebar-collapse" id="sidebar-collapse" type="button" aria-label="Recolher menu">‹</button></div>
+        <div class="sidebar-section-label">MENU PRINCIPAL</div>
+        <nav class="sidebar-nav" aria-label="Principal">
+          <a href="#/inicio" data-nav="inicio"><i>⌂</i><span>Visão geral</span></a>
+          <a href="#/plano" data-nav="plano"><i>▤</i><span>Meu treinamento</span></a>
+          <a href="#/progresso" data-nav="progresso"><i>↗</i><span>Evolução</span></a>
+          <a href="#/checkin" data-nav="checkin"><i>＋</i><span>Registrar sessão</span></a>
+          <a href="#/nutricao" data-nav="nutricao"><i>◉</i><span>Nutrição</span></a>
+          <a href="#/biblioteca" data-nav="biblioteca"><i>▦</i><span>Biblioteca</span></a>
+          <a href="#/chat" data-nav="chat"><i>▱</i><span>Mensagens</span></a>
+        </nav>
+        <div class="sidebar-spacer"></div>
+        <div class="sidebar-bottom"><a href="#/preferencias" data-nav="preferencias"><i>⚙</i><span>Preferências</span></a><div class="sidebar-user"><span class="user-avatar" id="sidebar-avatar">R</span><span class="sidebar-user-copy"><b id="sidebar-name">Seu perfil</b><small>Espaço privado</small></span><a href="#/perfil" aria-label="Abrir perfil">···</a></div></div>
+      </aside>
+      <div class="workspace">
+        <header class="topbar">
+          <button class="mobile-menu-button" id="mobile-menu-toggle" type="button" aria-label="Abrir navegação">☰</button>
+          <div class="topbar-context"><span class="topbar-overline">SEU ESPAÇO DE TREINO</span><span class="topbar-title" id="topbar-title">Visão geral</span></div>
+          <div class="topbar-actions"><label class="member-switch-wrap" aria-label="Selecionar perfil"><span>PERFIL</span><select id="member-switch" aria-label="Alternar perfil"><option value="self">Meu perfil</option></select></label><button class="avatar-button" type="button" data-route="/perfil" aria-label="Abrir perfil"><span id="avatar-initial">R</span></button></div>
+        </header>
+        <nav class="top-navigation" aria-label="Navegação superior"><a href="#/inicio" data-nav="inicio">Visão geral</a><a href="#/plano" data-nav="plano">Treinamento</a><a href="#/progresso" data-nav="progresso">Evolução</a><a href="#/nutricao" data-nav="nutricao">Nutrição</a><a href="#/biblioteca" data-nav="biblioteca">Biblioteca</a><a href="#/chat" data-nav="chat">Mensagens</a></nav>
+        <main id="app" tabindex="-1" aria-live="polite"></main>
+      </div>
+      <nav class="mobile-nav" aria-label="Navegação principal">
+        <a href="#/inicio" data-nav="inicio"><i>⌂</i><span>Início</span></a><a href="#/plano" data-nav="plano"><i>▤</i><span>Treino</span></a><a href="#/checkin" data-nav="checkin" class="mobile-nav-action"><i>＋</i><span>Registrar</span></a><a href="#/progresso" data-nav="progresso"><i>↗</i><span>Evolução</span></a><a href="#/chat" data-nav="chat"><i>▱</i><span>Chat</span></a>
       </nav>
+      <button class="sidebar-backdrop" id="sidebar-backdrop" type="button" aria-label="Fechar navegação"></button>
     </div>
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
     <script src="supabase-config.js" defer></script>
-    <script src="training.js?v=7" defer></script>
-    <script src="social.js?v=7" defer></script>
-    <script src="app.js?v=7" defer></script>
+    <script src="training.js?v=9" defer></script>
+    <script src="social.js?v=8" defer></script>
+    <script src="library.js?v=2" defer></script>
+    <script src="app.js?v=9" defer></script>
   </body>
 </html>
 
