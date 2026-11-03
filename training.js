@@ -45,6 +45,10 @@
       exercise("Crucifixo inverso na máquina", "Parte de trás dos ombros · 10–15 repetições", ["ombro", "cotovelo"], "open", "Mantenha o pescoço relaxado e controle a volta."),
       exercise("Puxada do cabo em direção ao rosto", "Ombros e costas · 10–15 repetições", ["ombro", "cotovelo"], "pull", "Use carga leve, puxe na altura do rosto e pare se houver desconforto no ombro."),
     ],
+    forearms: [
+      exercise("Rosca inversa com barra", "Antebraços e braquiorradial · 10–15 repetições", ["cotovelo"], "curl", "Use carga leve e mantenha os punhos alinhados."),
+      exercise("Flexão de punho com halteres", "Antebraços · 12–15 repetições", ["cotovelo"], "curl", "Apoie os antebraços e mova apenas os punhos, sem dor."),
+    ],
     biceps: [
       exercise("Rosca bíceps sentada na máquina", "Parte da frente dos braços · 10–15 repetições", ["cotovelo"], "curl", "Mantenha os braços apoiados e evite balançar o tronco."),
       exercise("Rosca direta na polia baixa", "Bíceps · 10–15 repetições", ["cotovelo"], "curl", "Use a barra reta na polia baixa, mantenha os cotovelos junto ao tronco e controle a volta."),
@@ -120,7 +124,7 @@
     pullB: ["row", "verticalPull", "shoulder", "biceps", "verticalPull", "core", "cardio"],
     legsA: ["squat", "hinge", "hamstring", "glute", "calves", "core", "squat", "cardio"],
     legsB: ["squat", "glute", "hamstring", "hinge", "calves", "core", "squat", "cardio"],
-    conditioning: ["cardio", "core", "glute", "cardio"],
+    conditioning: ["mobility", "core"],
   };
   const weeks = {
     2: [[0,"fullA","Corpo todo A"],[1,"fullB","Corpo todo B"]],
@@ -132,7 +136,7 @@
   const titleFor = {fullA:"Corpo inteiro A",fullB:"Corpo inteiro B",fullC:"Corpo inteiro C",upperA:"Tronco · peito, costas e braços A",upperB:"Tronco · peito, costas e braços B",lowerA:"Pernas e glúteos A",lowerB:"Pernas e glúteos B",pushA:"Peito, ombros e tríceps A",pushB:"Peito, ombros e tríceps B",pullA:"Costas e bíceps A",pullB:"Costas e bíceps B",legsA:"Pernas e glúteos A",legsB:"Pernas e glúteos B",conditioning:"Condicionamento e core"};
   const areas = ["segunda-feira","terça-feira","quarta-feira","quinta-feira","sexta-feira","sábado","domingo"];
   function choose(key, variant, equipment="Academia completa") { const catalog=equipment==="Em casa sem equipamentos"?homeBare:equipment==="Em casa com equipamentos"?homeGear:bank;const options=catalog[key]||bank[key]||bank.core;return options[variant%options.length]; }
-  const muscleKeys={"Quadríceps":["squat"],"Glúteos":["glute"],"Posteriores de coxa":["hamstring","hinge"],"Panturrilhas":["calves"],"Peito":["chest"],"Costas":["row","verticalPull"],"Ombros":["shoulder"],"Bíceps":["biceps"],"Tríceps":["triceps"],"Abdômen e core":["core"]};
+  const muscleKeys={"Quadríceps":["squat"],"Glúteos":["glute"],"Posteriores de coxa":["hamstring","hinge"],"Panturrilhas":["calves"],"Peito":["chest"],"Costas":["row","verticalPull"],"Ombros":["shoulder"],"Bíceps":["biceps"],"Antebraços":["forearms"],"Tríceps":["triceps"],"Abdômen e core":["core"]};
   function keysForMuscles(names=[]){return names.flatMap(name=>muscleKeys[name]||[]);}
   function makeSession(profile, kind, variant, dayIndex, primaryGroups, secondaryGroups) {
     const minutes=Number(profile.minutes)||60;const cardioMinutes=Number(profile.cardioMinutes??15);
@@ -174,24 +178,32 @@
   }
   function buildWeek(profile) {
     const days=Array.from({length:7},(_,index)=>({weekday:areas[index],index,rest:true,title:"Recuperação",icon:"☼",minutes:0,exercises:[]}));
-    const fallback={2:[0,3],3:[0,2,4],4:[0,1,3,5],5:[0,1,2,4,5],6:[0,1,2,3,4,5]};
-    const workoutDays=Array.isArray(profile.daysOfWeek)?[...new Set(profile.daysOfWeek.map(Number).filter(day=>day>=0&&day<7))].sort((a,b)=>a-b):fallback[Number(profile.days)]||fallback[3];
-    const count=Math.max(2,Math.min(6,workoutDays.length||Number(profile.days)||3));
-    const primary=(profile.primaryMuscles||[]).slice(0,3),secondary=(profile.secondaryMuscles||[]).filter(group=>!primary.includes(group)).slice(0,4);
+    const fallback={1:[0],2:[0,3],3:[0,2,4],4:[0,1,3,5],5:[0,1,2,4,5],6:[0,1,2,3,4,5],7:[0,1,2,3,4,5,6]};
+    const workoutDays=Array.isArray(profile.daysOfWeek)&&profile.daysOfWeek.length?[...new Set(profile.daysOfWeek.map(Number).filter(day=>day>=0&&day<7))].sort((a,b)=>a-b):fallback[Number(profile.days)]||fallback[3];
+    const count=Math.max(1,Math.min(7,workoutDays.length||Number(profile.days)||3));
+    const primary=[...new Set([profile.focusMuscle,...(profile.primaryMuscles||[])].filter(Boolean))].slice(0,3),secondary=(profile.secondaryMuscles||[]).filter(group=>!primary.includes(group)).slice(0,4);
     const pref=profile.trainingSplit||"Automática";
     let split;
-    if(pref==="Corpo todo"||(pref==="Automática"&&count<=3))split=Array.from({length:count},(_,i)=>["fullA","fullB","fullC"][i%3]);
-    else if(pref==="Superior / inferior"||count===4)split=Array.from({length:count},(_,i)=>i%2?"lowerA":"upperA");
-    else if(pref==="Push / pull / pernas"||count>=6)split=Array.from({length:count},(_,i)=>["pushA","pullA","legsA"][i%3]);
+    if(count===1)split=["fullA"];
+    else if(count===7&&pref==="Corpo todo")split=["fullA","conditioning","fullB","conditioning","fullC","conditioning","conditioning"];
+    else if(count===7&&pref==="Superior / inferior")split=["upperA","lowerA","conditioning","upperB","lowerB","conditioning","conditioning"];
+    else if(count===7)split=["pushA","pullA","legsA","pushB","pullB","legsB","conditioning"];
+    else if(pref==="Corpo todo"&&count<=3)split=Array.from({length:count},(_,i)=>["fullA","fullB","fullC"][i%3]);
+    else if(pref==="Corpo todo")split=Array.from({length:count},(_,i)=>i%2?"conditioning":["fullA","fullB","fullC"][Math.floor(i/2)%3]);
+    else if(pref==="Automática"&&count<=3)split=Array.from({length:count},(_,i)=>["fullA","fullB","fullC"][i%3]);
+    else if(pref==="Superior / inferior")split=Array.from({length:count},(_,i)=>i===4?"conditioning":i%2?"lowerA":i%4===2?"upperB":"upperA");
+    else if(pref==="Push / pull / pernas"||count>=6)split=Array.from({length:count},(_,i)=>["pushA","pullA","legsA","pushB","pullB","legsB"][i%6]);
+    else if(count===4)split=["upperA","lowerA","upperB","lowerB"];
+    else if(count===5)split=["upperA","lowerA","upperB","lowerB","conditioning"];
     else split=["upperA","lowerA","upperB","lowerB","fullC"];
-    const titleMap={fullA:"Corpo todo A",fullB:"Corpo todo B",fullC:"Corpo todo C",upperA:"Tronco A",upperB:"Tronco B",lowerA:"Membros inferiores A",lowerB:"Membros inferiores B",pushA:"Empurrar",pullA:"Puxar",legsA:"Pernas"};
+    const titleMap={fullA:"Corpo todo A",fullB:"Corpo todo B",fullC:"Corpo todo C",upperA:"Tronco A",upperB:"Tronco B",lowerA:"Membros inferiores A",lowerB:"Membros inferiores B",pushA:"Empurrar A",pushB:"Empurrar B",pullA:"Puxar A",pullB:"Puxar B",legsA:"Pernas A",legsB:"Pernas B",conditioning:"Mobilidade e recuperação ativa"};
     workoutDays.slice(0,count).forEach((dayIndex,slot)=>{
       const kind=split[slot]||"fullA";
       const rotatedPrimary=primary.length?[primary[slot%primary.length],...primary.filter((_,i)=>i!==slot%primary.length)]:[];
-      const focus=rotatedPrimary.slice(0,2);
+      const focus=kind==="conditioning"?[]:rotatedPrimary.slice(0,2);
       const focusedKeys=keysForMuscles(focus);
       const base=(mixed[kind]||mixed.fullA).filter(key=>key!=="cardio");
-      const secondaryKeys=keysForMuscles(secondary);
+      const secondaryKeys=kind==="conditioning"?[]:keysForMuscles(secondary);
       const prioritizedBase=[...focusedKeys,...base,...secondaryKeys];
       mixed[`__custom_${slot}`]=prioritizedBase;
       const day=makeSession(profile,`__custom_${slot}`,slot,dayIndex,focus,secondary);
