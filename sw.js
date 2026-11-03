@@ -1,4 +1,4 @@
-const CACHE = "ritmo-shell-v5";
+const CACHE = "ritmo-shell-v6";
 const FILES = ["./", "./index.html", "./styles.css", "./app.js", "./training.js", "./social.js", "./supabase-config.js", "./manifest.webmanifest", "./assets/icon.svg"];
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(FILES)));
