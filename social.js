@@ -82,7 +82,7 @@
     const action=event.submitter?.value||form.dataset.authAction||"login";const fields=new FormData(form);const email=String(fields.get("email")||"").trim();const password=String(fields.get("password")||"");
     buttons.forEach(button=>button.disabled=true);showError(root,action==="signup"?"Criando sua conta…":"Entrando…",true);
     try{
-      const result=action==="signup"?await state.client.auth.signUp({email,password}):await state.client.auth.signInWithPassword({email,password});
+      const result=action==="signup"?await state.client.auth.signUp({email,password,options:{emailRedirectTo:`${window.location.origin}${window.location.pathname}`}}):await state.client.auth.signInWithPassword({email,password});
       if(result.error){showError(root,result.error.message);return;}
       if(action==="signup"&&!result.data.session){showError(root,"Conta criada. Abra o e-mail de confirmação e depois volte para entrar.",true);return;}
       await renderChat(root);
